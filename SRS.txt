@@ -1,0 +1,1614 @@
+================================================================================
+                    SOFTWARE REQUIREMENTS SPECIFICATION (SRS)
+                         BRAND SHOPPING APPLICATION
+================================================================================
+Document Version: 1.0
+Date: January 18, 2026
+Project Name: Brand Shopping Application
+
+================================================================================
+                              TABLE OF CONTENTS
+================================================================================
+
+1. INTRODUCTION
+   1.1 Purpose
+   1.2 Scope
+   1.3 Definitions, Acronyms, and Abbreviations
+   1.4 Technology Stack Overview
+
+2. SYSTEM ARCHITECTURE
+   2.1 Clean Architecture Overview
+   2.2 Flutter Mobile Application
+   2.3 React Admin Panel
+   2.4 Hono API Backend
+
+3. FUNCTIONAL REQUIREMENTS
+   3.1 User Management
+   3.2 Product Catalog
+   3.3 Shopping Cart
+   3.4 Order Management
+   3.5 Payment Processing
+   3.6 Notifications
+   3.7 Admin Panel Features
+
+4. NON-FUNCTIONAL REQUIREMENTS
+
+5. API SPECIFICATIONS
+
+6. DATABASE SCHEMA
+
+7. ERROR HANDLING STRATEGY
+
+8. APPENDICES
+
+================================================================================
+                              1. INTRODUCTION
+================================================================================
+
+1.1 PURPOSE
+-----------
+This document provides a comprehensive Software Requirements Specification for 
+a brand-specific shopping mobile application built with Flutter, accompanied by 
+a React-based admin panel and a Hono API backend hosted on Cloudflare Workers.
+
+1.2 SCOPE
+---------
+The system consists of three main components:
+- Flutter Mobile Application (Android & iOS)
+- React + Vite TypeScript Admin Panel
+- Hono API Backend on Cloudflare Workers
+
+1.3 DEFINITIONS, ACRONYMS, AND ABBREVIATIONS
+---------------------------------------------
+- SRS: Software Requirements Specification
+- API: Application Programming Interface
+- UI: User Interface
+- UX: User Experience
+- BLOC: Business Logic Component
+- JWT: JSON Web Token
+- SKU: Stock Keeping Unit
+- COD: Cash on Delivery
+
+1.4 TECHNOLOGY STACK OVERVIEW
+-----------------------------
+
+MOBILE APPLICATION (Flutter):
+- Framework: Flutter (Latest Stable)
+- Architecture: Clean Architecture
+- State Management: flutter_bloc
+- Functional Programming: fpdart
+- Routing: go_router
+- Local Storage: ObjectBox
+- Push Notifications: OneSignal
+- Authentication: Google Sign-In
+
+ADMIN PANEL:
+- Framework: React 18+
+- Build Tool: Vite
+- Language: TypeScript
+- Styling: Tailwind CSS / MUI (to be decided)
+
+BACKEND API:
+- Framework: Hono
+- Hosting: Cloudflare Workers
+- Database: Cloudflare D1 (SQLite) / Planetscale / Neon (PostgreSQL)
+- Authentication: Google OAuth 2.0
+- File Storage: Cloudflare R2
+
+================================================================================
+                           2. SYSTEM ARCHITECTURE
+================================================================================
+
+2.1 CLEAN ARCHITECTURE OVERVIEW
+-------------------------------
+
+The Flutter application follows Clean Architecture with the following layers:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           PRESENTATION LAYER                                │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  Pages/Screens  │  Widgets  │  BLoCs  │  State  │  Events          │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                             DOMAIN LAYER                                    │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  Entities  │  Use Cases  │  Repository Interfaces  │  Failures     │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                              DATA LAYER                                     │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  Models  │  Data Sources (Remote/Local)  │  Repository Impl        │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                              CORE LAYER                                     │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  Utils  │  Constants  │  Errors  │  Network  │  DI (get_it)        │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+2.2 FLUTTER MOBILE APPLICATION STRUCTURE
+----------------------------------------
+
+lib/
+├── core/
+│   ├── constants/
+│   │   ├── api_constants.dart
+│   │   ├── app_constants.dart
+│   │   └── storage_keys.dart
+│   ├── errors/
+│   │   ├── exceptions.dart
+│   │   └── failures.dart
+│   ├── network/
+│   │   ├── api_client.dart
+│   │   ├── network_info.dart
+│   │   └── interceptors/
+│   ├── utils/
+│   │   ├── input_validators.dart
+│   │   ├── date_formatter.dart
+│   │   └── price_formatter.dart
+│   ├── theme/
+│   │   ├── app_theme.dart
+│   │   ├── app_colors.dart
+│   │   └── app_typography.dart
+│   └── di/
+│       └── injection_container.dart
+│
+├── features/
+│   ├── auth/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   ├── models/
+│   │   │   └── repositories/
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   ├── repositories/
+│   │   │   └── usecases/
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       ├── pages/
+│   │       └── widgets/
+│   │
+│   ├── home/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   │
+│   ├── products/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   │
+│   ├── cart/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   │
+│   ├── orders/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   │
+│   ├── wishlist/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   │
+│   ├── profile/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   │
+│   ├── search/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   │
+│   ├── notifications/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   │
+│   └── settings/
+│       ├── data/
+│       ├── domain/
+│       └── presentation/
+│
+├── routes/
+│   └── app_router.dart
+│
+└── main.dart
+
+2.3 REACT ADMIN PANEL STRUCTURE
+-------------------------------
+
+src/
+├── api/
+│   ├── client.ts
+│   ├── endpoints.ts
+│   └── hooks/
+├── components/
+│   ├── common/
+│   ├── dashboard/
+│   ├── products/
+│   ├── orders/
+│   ├── users/
+│   ├── banners/
+│   └── layout/
+├── features/
+│   ├── auth/
+│   ├── dashboard/
+│   ├── products/
+│   ├── categories/
+│   ├── orders/
+│   ├── users/
+│   ├── banners/
+│   ├── coupons/
+│   ├── reviews/
+│   └── settings/
+├── hooks/
+├── lib/
+├── pages/
+├── routes/
+├── store/
+├── types/
+├── utils/
+└── App.tsx
+
+2.4 HONO API BACKEND STRUCTURE
+------------------------------
+
+src/
+├── routes/
+│   ├── auth.ts
+│   ├── users.ts
+│   ├── products.ts
+│   ├── categories.ts
+│   ├── cart.ts
+│   ├── orders.ts
+│   ├── wishlist.ts
+│   ├── banners.ts
+│   ├── coupons.ts
+│   ├── reviews.ts
+│   ├── notifications.ts
+│   ├── search.ts
+│   └── admin/
+├── middleware/
+│   ├── auth.ts
+│   ├── admin.ts
+│   ├── rate-limit.ts
+│   └── cors.ts
+├── services/
+├── models/
+├── utils/
+├── db/
+│   ├── schema.ts
+│   └── migrations/
+├── types/
+└── index.ts
+
+================================================================================
+                        3. FUNCTIONAL REQUIREMENTS
+================================================================================
+
+3.1 USER MANAGEMENT
+-------------------
+
+3.1.1 Guest User System
+-----------------------
+REQ-USR-001: Guest User Initialization
+- System shall create a guest user entry with null properties for core fields
+- Guest user shall have a unique device-based identifier
+- Guest user data stored locally in ObjectBox
+- Guest user can access all shopping features without authentication
+
+REQ-USR-002: Guest User Capabilities
+- Browse all products and categories
+- Add items to cart (stored locally)
+- Add items to wishlist (stored locally)
+- Place orders (requires contact information at checkout)
+- View order history (local orders only)
+- Receive push notifications
+
+REQ-USR-003: Guest to Authenticated User Transition
+- When guest logs in via Google, existing local data transfers to cloud account
+- Cart items merge: local items added to any existing cloud cart
+- Wishlist items merge: local items added to cloud wishlist
+- Order history: local orders linked to authenticated account
+- Guest device identifier linked to authenticated account
+
+REQ-USR-004: Guest Data Lifecycle
+- Guest data persists until app uninstallation
+- After uninstall, guest data cannot be recovered
+- Clear warning displayed to guest users about data volatility
+
+3.1.2 Authenticated User System
+-------------------------------
+REQ-USR-005: Google OAuth Authentication
+- ONLY Google Sign-In supported (no email/password)
+- OAuth 2.0 flow with secure token management
+- Automatic token refresh mechanism
+- Secure token storage using flutter_secure_storage
+
+REQ-USR-006: User Profile Management
+- View and edit profile information
+- Profile picture from Google account
+- Editable fields: Name, Phone, Email (read-only from Google)
+- Multiple delivery addresses management
+
+REQ-USR-007: Address Management
+- Add multiple delivery addresses
+- Set default delivery address
+- Edit existing addresses
+- Delete addresses
+- Address validation
+
+REQ-USR-008: User Data Persistence
+- All user data stored in cloud database
+- Data accessible across devices
+- Automatic sync on login
+- Data never lost after registration
+
+3.2 PRODUCT CATALOG
+-------------------
+
+3.2.1 Categories
+----------------
+REQ-CAT-001: Category Structure
+- Hierarchical category system (parent/child)
+- Category image and description
+- Category-specific promotions
+- Featured categories on home
+
+REQ-CAT-002: Category Navigation
+- Browse by category
+- Filter products within category
+- Sort products within category
+- Category search
+
+3.2.2 Products
+--------------
+REQ-PRD-001: Product Information
+- Product ID (SKU)
+- Product name
+- Description (short and long)
+- Multiple product images (carousel)
+- Price and discounted price
+- Stock availability status
+- Product variants (size, color, etc.)
+- Product specifications
+- Related products
+- Brand information
+
+REQ-PRD-002: Product Variants
+- Size variants with individual stock
+- Color variants with images
+- Price variation per variant
+- Stock tracking per variant
+
+REQ-PRD-003: Product Display
+- Grid and list view options
+- Quick view functionality
+- Zoom on product images
+- Share product functionality
+- Add to cart from listing
+- Add to wishlist from listing
+
+REQ-PRD-004: Product Reviews & Ratings
+- View product ratings (1-5 stars)
+- Read customer reviews
+- Submit reviews (authenticated users only)
+- Review moderation system
+- Helpful vote on reviews
+- Sort reviews by date/rating/helpfulness
+
+3.2.3 Search & Discovery
+------------------------
+REQ-SRC-001: Search Functionality
+- Text-based product search
+- Search suggestions (autocomplete)
+- Search history
+- Search filters (price, category, rating, etc.)
+- Search result sorting
+- Voice search (optional)
+
+REQ-SRC-002: Product Discovery
+- Recently viewed products
+- Trending products
+- Bestsellers
+- New arrivals
+- Recommended products (based on history)
+- Products on sale
+
+3.3 SHOPPING CART
+-----------------
+
+REQ-CRT-001: Cart Operations
+- Add product to cart
+- Update quantity
+- Remove product from cart
+- Clear entire cart
+- Save for later functionality
+- Move saved items to cart
+
+REQ-CRT-002: Cart Persistence
+- Guest: Cart stored in ObjectBox (local)
+- Authenticated: Cart synced with cloud
+- Cart merge on login
+
+REQ-CRT-003: Cart Display
+- Product thumbnail
+- Product name and variant
+- Unit price and total price
+- Quantity selector
+- Stock availability check
+- Applied discounts shown
+- Estimated delivery date
+
+REQ-CRT-004: Cart Calculations
+- Subtotal calculation
+- Discount application
+- Shipping cost calculation
+- Tax calculation (if applicable)
+- Grand total
+
+REQ-CRT-005: Coupon/Promo Codes
+- Apply coupon code field
+- Validate coupon eligibility
+- Show discount applied
+- Remove coupon option
+- Multiple coupon support (if allowed)
+
+3.4 ORDER MANAGEMENT
+--------------------
+
+3.4.1 Checkout Process
+----------------------
+REQ-CHK-001: Checkout Flow
+Step 1: Cart Review
+- Review cart items
+- Update quantities if needed
+- Apply coupon codes
+
+Step 2: Delivery Information
+- Select saved address (authenticated)
+- Enter new address
+- Guest users: Enter contact details
+- Delivery date selection (if available)
+
+Step 3: Shipping Method
+- Standard delivery
+- Express delivery (if available)
+- Store pickup (if available)
+- Shipping cost display
+
+Step 4: Payment Method
+- Select payment option
+- Enter payment details (if applicable)
+- Review order summary
+
+Step 5: Order Confirmation
+- Place order button
+- Order confirmation screen
+- Order number display
+- Confirmation email/SMS
+
+REQ-CHK-002: Guest Checkout
+- Phone number required
+- Email required (for order updates)
+- Name required
+- Full address required
+- Order linked to guest device ID
+
+3.4.2 Payment Processing
+------------------------
+REQ-PAY-001: Payment Methods
+- Cash on Delivery (COD)
+- Credit/Debit Card (Stripe/Similar)
+- Digital Wallets (Apple Pay, Google Pay)
+- UPI (for Indian market)
+- Bank Transfer (optional)
+
+REQ-PAY-002: Payment Security
+- PCI DSS compliance
+- Secure payment gateway integration
+- Payment verification
+- Failed payment handling
+- Refund processing
+
+3.4.3 Order Tracking
+--------------------
+REQ-ORD-001: Order Status
+Status Flow:
+1. Order Placed
+2. Order Confirmed
+3. Processing
+4. Shipped
+5. Out for Delivery
+6. Delivered
+7. Cancelled (if applicable)
+8. Returned (if applicable)
+
+REQ-ORD-002: Order History
+- View all past orders
+- Filter by status
+- Filter by date range
+- Search orders
+- Re-order functionality
+- Download invoice
+
+REQ-ORD-003: Order Details
+- Order number
+- Order date and time
+- Items ordered with prices
+- Delivery address
+- Payment method used
+- Order status with timeline
+- Tracking number (if shipped)
+- Estimated delivery date
+
+REQ-ORD-004: Order Cancellation
+- Cancel order (before shipping)
+- Cancellation reason selection
+- Refund initiation
+- Cancellation confirmation
+
+REQ-ORD-005: Returns & Refunds
+- Initiate return request
+- Return eligibility check
+- Return reason selection
+- Upload product images (damaged items)
+- Return pickup scheduling
+- Refund status tracking
+
+3.5 HOME & BANNERS
+------------------
+
+REQ-HOM-001: Home Screen Components
+- App bar with logo and actions
+- Search bar
+- Banner carousel (promotional)
+- Category quick links
+- Featured products section
+- New arrivals section
+- Best sellers section
+- Deals of the day
+- Recommended for you
+- Recently viewed
+
+REQ-BNR-001: Banner System
+- Image banners (full width)
+- Video banners (optional)
+- Banner linking (product/category/external)
+- Banner scheduling (start/end date)
+- Banner priority ordering
+- Banner analytics tracking
+
+REQ-BNR-002: Banner Types
+- Hero banners (main carousel)
+- Category banners
+- Promotional banners
+- Flash sale banners
+- Event banners
+
+3.6 WISHLIST
+------------
+
+REQ-WSH-001: Wishlist Operations
+- Add product to wishlist
+- Remove from wishlist
+- Move to cart
+- Share wishlist
+- Wishlist count badge
+
+REQ-WSH-002: Wishlist Persistence
+- Guest: ObjectBox local storage
+- Authenticated: Cloud sync
+- Merge on login
+
+REQ-WSH-003: Wishlist Features
+- Price drop notifications
+- Stock alerts
+- Product availability status
+- Quick add to cart
+
+3.7 NOTIFICATIONS
+-----------------
+
+REQ-NTF-001: Push Notification Types
+- Order status updates
+- Promotional notifications
+- Price drop alerts
+- Back in stock alerts
+- Flash sale notifications
+- Abandoned cart reminders
+- New product launches
+- Personalized recommendations
+
+REQ-NTF-002: OneSignal Integration
+- Device registration
+- User tagging (for targeting)
+- Notification preferences
+- In-app notification center
+- Deep linking from notifications
+- Notification history
+
+REQ-NTF-003: Notification Preferences
+- Enable/disable by category
+- Order notifications (mandatory)
+- Marketing notifications (optional)
+- Quiet hours setting
+
+3.8 SETTINGS & PREFERENCES
+--------------------------
+
+REQ-SET-001: App Settings
+- Language selection
+- Theme (light/dark/system)
+- Notification preferences
+- Currency display
+- Address book management
+- Payment methods management
+
+REQ-SET-002: Account Settings
+- Profile management
+- Change password (N/A - Google only)
+- Linked accounts
+- Privacy settings
+- Delete account option
+
+REQ-SET-003: App Information
+- About us
+- Terms and conditions
+- Privacy policy
+- Help & FAQ
+- Contact support
+- Rate the app
+- Share the app
+- App version
+
+3.9 ADMIN PANEL FEATURES
+------------------------
+
+3.9.1 Dashboard
+---------------
+REQ-ADM-001: Dashboard Analytics
+- Total sales (daily/weekly/monthly/yearly)
+- Order count and status breakdown
+- Revenue charts
+- Top selling products
+- Low stock alerts
+- New user registrations
+- Active users count
+- Recent orders list
+- Pending actions widget
+
+3.9.2 Product Management
+------------------------
+REQ-ADM-002: Product CRUD
+- Add new product
+- Edit product details
+- Delete product
+- Bulk import/export (CSV)
+- Product image upload
+- Variant management
+- Stock management
+- Price management
+- Product status (active/inactive)
+
+REQ-ADM-003: Category Management
+- Create categories
+- Edit categories
+- Delete categories
+- Category hierarchy management
+- Category ordering
+- Category images
+
+3.9.3 Order Management
+----------------------
+REQ-ADM-004: Order Operations
+- View all orders
+- Filter orders by status/date
+- Search orders
+- Update order status
+- Print order details/invoice
+- Cancel orders
+- Process refunds
+- Order notes
+
+3.9.4 User Management
+---------------------
+REQ-ADM-005: User Operations
+- View all users (registered + guests)
+- User search
+- User details view
+- Block/unblock users
+- User order history
+- User activity log
+
+3.9.5 Banner Management
+-----------------------
+REQ-ADM-006: Banner Operations
+- Create banners
+- Upload banner images
+- Set banner links
+- Schedule banners
+- Set banner priority
+- Banner analytics view
+- Delete banners
+
+3.9.6 Coupon Management
+-----------------------
+REQ-ADM-007: Coupon Operations
+- Create coupons
+- Coupon types (percentage/fixed)
+- Coupon conditions (min purchase, etc.)
+- Usage limits
+- Expiry dates
+- User-specific coupons
+- Category-specific coupons
+- Product-specific coupons
+
+3.9.7 Review Management
+-----------------------
+REQ-ADM-008: Review Moderation
+- View all reviews
+- Approve/reject reviews
+- Delete reviews
+- Reply to reviews
+- Flag inappropriate content
+
+3.9.8 Notification Management
+-----------------------------
+REQ-ADM-009: Push Notification Sending
+- Send to all users
+- Send to user segments
+- Send to specific users
+- Schedule notifications
+- Notification templates
+- Notification analytics
+
+3.9.9 Settings & Configuration
+------------------------------
+REQ-ADM-010: System Settings
+- Store information
+- Shipping configuration
+- Payment gateway settings
+- Tax settings
+- Email templates
+- SMS templates
+- Admin user management
+- Role-based access control
+
+================================================================================
+                      4. NON-FUNCTIONAL REQUIREMENTS
+================================================================================
+
+4.1 PERFORMANCE
+---------------
+NFR-001: App launch time < 3 seconds
+NFR-002: API response time < 500ms for 95th percentile
+NFR-003: Image loading with lazy loading and caching
+NFR-004: Smooth scrolling (60 FPS)
+NFR-005: Offline mode for browsing cached products
+NFR-006: Efficient memory usage (ObjectBox optimization)
+
+4.2 SECURITY
+------------
+NFR-007: HTTPS for all API communications
+NFR-008: JWT token-based authentication
+NFR-009: Secure storage for sensitive data
+NFR-010: Input validation and sanitization
+NFR-011: SQL injection prevention
+NFR-012: XSS prevention
+NFR-013: Rate limiting on API endpoints
+NFR-014: CORS configuration
+
+4.3 SCALABILITY
+---------------
+NFR-015: Cloudflare Workers edge deployment
+NFR-016: CDN for static assets
+NFR-017: Database connection pooling
+NFR-018: Horizontal scaling capability
+
+4.4 RELIABILITY
+---------------
+NFR-019: 99.9% uptime target
+NFR-020: Graceful error handling
+NFR-021: Automatic retry mechanisms
+NFR-022: Data backup and recovery
+
+4.5 USABILITY
+-------------
+NFR-023: Intuitive navigation
+NFR-024: Consistent UI/UX
+NFR-025: Accessibility support (WCAG)
+NFR-026: Multi-language support ready
+NFR-027: Responsive admin panel
+
+4.6 MAINTAINABILITY
+-------------------
+NFR-028: Clean code architecture
+NFR-029: Comprehensive documentation
+NFR-030: Unit and integration testing
+NFR-031: CI/CD pipeline ready
+
+================================================================================
+                          5. API SPECIFICATIONS
+================================================================================
+
+5.1 AUTHENTICATION ENDPOINTS
+----------------------------
+
+POST   /api/v1/auth/google
+       - Google OAuth sign-in
+       - Request: { idToken: string }
+       - Response: { accessToken, refreshToken, user }
+
+POST   /api/v1/auth/refresh
+       - Refresh access token
+       - Request: { refreshToken: string }
+       - Response: { accessToken, refreshToken }
+
+POST   /api/v1/auth/logout
+       - Logout user
+       - Headers: Authorization: Bearer <token>
+       - Response: { success: true }
+
+POST   /api/v1/auth/guest/init
+       - Initialize guest user
+       - Request: { deviceId: string }
+       - Response: { guestId, token }
+
+5.2 USER ENDPOINTS
+------------------
+
+GET    /api/v1/users/me
+       - Get current user profile
+       
+PUT    /api/v1/users/me
+       - Update user profile
+       
+GET    /api/v1/users/me/addresses
+       - Get user addresses
+       
+POST   /api/v1/users/me/addresses
+       - Add new address
+       
+PUT    /api/v1/users/me/addresses/:id
+       - Update address
+       
+DELETE /api/v1/users/me/addresses/:id
+       - Delete address
+
+5.3 PRODUCT ENDPOINTS
+---------------------
+
+GET    /api/v1/products
+       - List products (paginated)
+       - Query: page, limit, category, sort, search
+       
+GET    /api/v1/products/:id
+       - Get product details
+       
+GET    /api/v1/products/:id/reviews
+       - Get product reviews
+       
+POST   /api/v1/products/:id/reviews
+       - Submit product review
+       
+GET    /api/v1/products/search
+       - Search products
+       
+GET    /api/v1/products/featured
+       - Get featured products
+       
+GET    /api/v1/products/bestsellers
+       - Get bestseller products
+       
+GET    /api/v1/products/new-arrivals
+       - Get new arrivals
+
+5.4 CATEGORY ENDPOINTS
+----------------------
+
+GET    /api/v1/categories
+       - List all categories
+       
+GET    /api/v1/categories/:id
+       - Get category details
+       
+GET    /api/v1/categories/:id/products
+       - Get products in category
+
+5.5 CART ENDPOINTS
+------------------
+
+GET    /api/v1/cart
+       - Get user cart
+       
+POST   /api/v1/cart/items
+       - Add item to cart
+       
+PUT    /api/v1/cart/items/:id
+       - Update cart item quantity
+       
+DELETE /api/v1/cart/items/:id
+       - Remove item from cart
+       
+DELETE /api/v1/cart
+       - Clear cart
+       
+POST   /api/v1/cart/merge
+       - Merge guest cart with user cart
+       
+POST   /api/v1/cart/coupon
+       - Apply coupon code
+       
+DELETE /api/v1/cart/coupon
+       - Remove coupon
+
+5.6 ORDER ENDPOINTS
+-------------------
+
+GET    /api/v1/orders
+       - List user orders
+       
+POST   /api/v1/orders
+       - Create new order
+       
+GET    /api/v1/orders/:id
+       - Get order details
+       
+PUT    /api/v1/orders/:id/cancel
+       - Cancel order
+       
+POST   /api/v1/orders/:id/return
+       - Initiate return
+
+5.7 WISHLIST ENDPOINTS
+----------------------
+
+GET    /api/v1/wishlist
+       - Get user wishlist
+       
+POST   /api/v1/wishlist/items
+       - Add to wishlist
+       
+DELETE /api/v1/wishlist/items/:id
+       - Remove from wishlist
+       
+POST   /api/v1/wishlist/merge
+       - Merge guest wishlist
+
+5.8 BANNER ENDPOINTS
+--------------------
+
+GET    /api/v1/banners
+       - Get active banners
+       
+GET    /api/v1/banners/:type
+       - Get banners by type
+
+5.9 NOTIFICATION ENDPOINTS
+--------------------------
+
+POST   /api/v1/notifications/register
+       - Register device for push notifications
+       
+GET    /api/v1/notifications
+       - Get notification history
+       
+PUT    /api/v1/notifications/:id/read
+       - Mark notification as read
+       
+PUT    /api/v1/notifications/preferences
+       - Update notification preferences
+
+5.10 ADMIN ENDPOINTS
+--------------------
+
+All admin endpoints prefixed with /api/v1/admin/
+
+Products:
+GET    /admin/products
+POST   /admin/products
+PUT    /admin/products/:id
+DELETE /admin/products/:id
+
+Categories:
+GET    /admin/categories
+POST   /admin/categories
+PUT    /admin/categories/:id
+DELETE /admin/categories/:id
+
+Orders:
+GET    /admin/orders
+GET    /admin/orders/:id
+PUT    /admin/orders/:id/status
+
+Users:
+GET    /admin/users
+GET    /admin/users/:id
+PUT    /admin/users/:id/status
+
+Banners:
+GET    /admin/banners
+POST   /admin/banners
+PUT    /admin/banners/:id
+DELETE /admin/banners/:id
+
+Coupons:
+GET    /admin/coupons
+POST   /admin/coupons
+PUT    /admin/coupons/:id
+DELETE /admin/coupons/:id
+
+Reviews:
+GET    /admin/reviews
+PUT    /admin/reviews/:id/status
+DELETE /admin/reviews/:id
+
+Notifications:
+POST   /admin/notifications/send
+
+Dashboard:
+GET    /admin/dashboard/stats
+GET    /admin/dashboard/sales
+GET    /admin/dashboard/orders
+
+================================================================================
+                           6. DATABASE SCHEMA
+================================================================================
+
+6.1 USERS TABLE
+---------------
+users
+├── id (UUID, PRIMARY KEY)
+├── google_id (VARCHAR, UNIQUE, NULLABLE)
+├── device_id (VARCHAR, NULLABLE) -- For guest users
+├── email (VARCHAR, NULLABLE)
+├── name (VARCHAR, NULLABLE)
+├── phone (VARCHAR, NULLABLE)
+├── profile_image (VARCHAR, NULLABLE)
+├── is_guest (BOOLEAN, DEFAULT true)
+├── is_active (BOOLEAN, DEFAULT true)
+├── onesignal_player_id (VARCHAR, NULLABLE)
+├── notification_preferences (JSON)
+├── created_at (TIMESTAMP)
+├── updated_at (TIMESTAMP)
+└── deleted_at (TIMESTAMP, NULLABLE)
+
+6.2 ADDRESSES TABLE
+-------------------
+addresses
+├── id (UUID, PRIMARY KEY)
+├── user_id (UUID, FOREIGN KEY -> users.id)
+├── label (VARCHAR) -- Home, Office, etc.
+├── recipient_name (VARCHAR)
+├── phone (VARCHAR)
+├── address_line_1 (VARCHAR)
+├── address_line_2 (VARCHAR, NULLABLE)
+├── city (VARCHAR)
+├── state (VARCHAR)
+├── postal_code (VARCHAR)
+├── country (VARCHAR)
+├── is_default (BOOLEAN, DEFAULT false)
+├── created_at (TIMESTAMP)
+└── updated_at (TIMESTAMP)
+
+6.3 CATEGORIES TABLE
+--------------------
+categories
+├── id (UUID, PRIMARY KEY)
+├── parent_id (UUID, FOREIGN KEY -> categories.id, NULLABLE)
+├── name (VARCHAR)
+├── slug (VARCHAR, UNIQUE)
+├── description (TEXT, NULLABLE)
+├── image_url (VARCHAR, NULLABLE)
+├── display_order (INTEGER, DEFAULT 0)
+├── is_active (BOOLEAN, DEFAULT true)
+├── created_at (TIMESTAMP)
+└── updated_at (TIMESTAMP)
+
+6.4 PRODUCTS TABLE
+------------------
+products
+├── id (UUID, PRIMARY KEY)
+├── sku (VARCHAR, UNIQUE)
+├── name (VARCHAR)
+├── slug (VARCHAR, UNIQUE)
+├── short_description (TEXT)
+├── long_description (TEXT)
+├── base_price (DECIMAL)
+├── sale_price (DECIMAL, NULLABLE)
+├── category_id (UUID, FOREIGN KEY -> categories.id)
+├── brand (VARCHAR, NULLABLE)
+├── stock_quantity (INTEGER, DEFAULT 0)
+├── is_featured (BOOLEAN, DEFAULT false)
+├── is_active (BOOLEAN, DEFAULT true)
+├── average_rating (DECIMAL, DEFAULT 0)
+├── review_count (INTEGER, DEFAULT 0)
+├── meta_title (VARCHAR, NULLABLE)
+├── meta_description (TEXT, NULLABLE)
+├── created_at (TIMESTAMP)
+└── updated_at (TIMESTAMP)
+
+6.5 PRODUCT_IMAGES TABLE
+------------------------
+product_images
+├── id (UUID, PRIMARY KEY)
+├── product_id (UUID, FOREIGN KEY -> products.id)
+├── image_url (VARCHAR)
+├── alt_text (VARCHAR, NULLABLE)
+├── display_order (INTEGER, DEFAULT 0)
+├── is_primary (BOOLEAN, DEFAULT false)
+└── created_at (TIMESTAMP)
+
+6.6 PRODUCT_VARIANTS TABLE
+--------------------------
+product_variants
+├── id (UUID, PRIMARY KEY)
+├── product_id (UUID, FOREIGN KEY -> products.id)
+├── name (VARCHAR) -- e.g., "Red - Large"
+├── sku (VARCHAR, UNIQUE)
+├── price_modifier (DECIMAL, DEFAULT 0)
+├── stock_quantity (INTEGER, DEFAULT 0)
+├── attributes (JSON) -- {"color": "Red", "size": "Large"}
+├── image_url (VARCHAR, NULLABLE)
+├── is_active (BOOLEAN, DEFAULT true)
+└── created_at (TIMESTAMP)
+
+6.7 CART_ITEMS TABLE
+--------------------
+cart_items
+├── id (UUID, PRIMARY KEY)
+├── user_id (UUID, FOREIGN KEY -> users.id)
+├── product_id (UUID, FOREIGN KEY -> products.id)
+├── variant_id (UUID, FOREIGN KEY -> product_variants.id, NULLABLE)
+├── quantity (INTEGER)
+├── added_at (TIMESTAMP)
+└── updated_at (TIMESTAMP)
+
+6.8 WISHLIST_ITEMS TABLE
+------------------------
+wishlist_items
+├── id (UUID, PRIMARY KEY)
+├── user_id (UUID, FOREIGN KEY -> users.id)
+├── product_id (UUID, FOREIGN KEY -> products.id)
+└── added_at (TIMESTAMP)
+
+6.9 ORDERS TABLE
+----------------
+orders
+├── id (UUID, PRIMARY KEY)
+├── order_number (VARCHAR, UNIQUE)
+├── user_id (UUID, FOREIGN KEY -> users.id)
+├── status (ENUM: placed, confirmed, processing, shipped, out_for_delivery, delivered, cancelled, returned)
+├── subtotal (DECIMAL)
+├── discount_amount (DECIMAL, DEFAULT 0)
+├── shipping_amount (DECIMAL)
+├── tax_amount (DECIMAL, DEFAULT 0)
+├── total_amount (DECIMAL)
+├── coupon_id (UUID, FOREIGN KEY -> coupons.id, NULLABLE)
+├── shipping_address (JSON)
+├── billing_address (JSON, NULLABLE)
+├── payment_method (VARCHAR)
+├── payment_status (ENUM: pending, paid, failed, refunded)
+├── payment_reference (VARCHAR, NULLABLE)
+├── notes (TEXT, NULLABLE)
+├── shipped_at (TIMESTAMP, NULLABLE)
+├── delivered_at (TIMESTAMP, NULLABLE)
+├── cancelled_at (TIMESTAMP, NULLABLE)
+├── cancellation_reason (TEXT, NULLABLE)
+├── created_at (TIMESTAMP)
+└── updated_at (TIMESTAMP)
+
+6.10 ORDER_ITEMS TABLE
+----------------------
+order_items
+├── id (UUID, PRIMARY KEY)
+├── order_id (UUID, FOREIGN KEY -> orders.id)
+├── product_id (UUID, FOREIGN KEY -> products.id)
+├── variant_id (UUID, FOREIGN KEY -> product_variants.id, NULLABLE)
+├── product_name (VARCHAR) -- Snapshot at order time
+├── variant_name (VARCHAR, NULLABLE)
+├── quantity (INTEGER)
+├── unit_price (DECIMAL)
+├── total_price (DECIMAL)
+└── created_at (TIMESTAMP)
+
+6.11 REVIEWS TABLE
+------------------
+reviews
+├── id (UUID, PRIMARY KEY)
+├── product_id (UUID, FOREIGN KEY -> products.id)
+├── user_id (UUID, FOREIGN KEY -> users.id)
+├── order_id (UUID, FOREIGN KEY -> orders.id, NULLABLE)
+├── rating (INTEGER) -- 1-5
+├── title (VARCHAR, NULLABLE)
+├── content (TEXT)
+├── is_verified_purchase (BOOLEAN, DEFAULT false)
+├── is_approved (BOOLEAN, DEFAULT false)
+├── helpful_count (INTEGER, DEFAULT 0)
+├── created_at (TIMESTAMP)
+└── updated_at (TIMESTAMP)
+
+6.12 BANNERS TABLE
+------------------
+banners
+├── id (UUID, PRIMARY KEY)
+├── title (VARCHAR)
+├── image_url (VARCHAR)
+├── link_type (ENUM: product, category, external, none)
+├── link_value (VARCHAR, NULLABLE)
+├── banner_type (ENUM: hero, category, promotional, flash_sale)
+├── display_order (INTEGER, DEFAULT 0)
+├── starts_at (TIMESTAMP, NULLABLE)
+├── ends_at (TIMESTAMP, NULLABLE)
+├── is_active (BOOLEAN, DEFAULT true)
+├── created_at (TIMESTAMP)
+└── updated_at (TIMESTAMP)
+
+6.13 COUPONS TABLE
+------------------
+coupons
+├── id (UUID, PRIMARY KEY)
+├── code (VARCHAR, UNIQUE)
+├── description (TEXT, NULLABLE)
+├── discount_type (ENUM: percentage, fixed)
+├── discount_value (DECIMAL)
+├── minimum_purchase (DECIMAL, DEFAULT 0)
+├── maximum_discount (DECIMAL, NULLABLE)
+├── usage_limit (INTEGER, NULLABLE)
+├── usage_count (INTEGER, DEFAULT 0)
+├── user_usage_limit (INTEGER, DEFAULT 1)
+├── applicable_products (JSON, NULLABLE) -- Product IDs
+├── applicable_categories (JSON, NULLABLE) -- Category IDs
+├── starts_at (TIMESTAMP)
+├── ends_at (TIMESTAMP)
+├── is_active (BOOLEAN, DEFAULT true)
+├── created_at (TIMESTAMP)
+└── updated_at (TIMESTAMP)
+
+6.14 COUPON_USAGES TABLE
+------------------------
+coupon_usages
+├── id (UUID, PRIMARY KEY)
+├── coupon_id (UUID, FOREIGN KEY -> coupons.id)
+├── user_id (UUID, FOREIGN KEY -> users.id)
+├── order_id (UUID, FOREIGN KEY -> orders.id)
+└── used_at (TIMESTAMP)
+
+6.15 NOTIFICATIONS TABLE
+------------------------
+notifications
+├── id (UUID, PRIMARY KEY)
+├── user_id (UUID, FOREIGN KEY -> users.id, NULLABLE) -- NULL for broadcast
+├── title (VARCHAR)
+├── body (TEXT)
+├── data (JSON, NULLABLE)
+├── notification_type (ENUM: order, promo, price_drop, stock_alert, general)
+├── is_read (BOOLEAN, DEFAULT false)
+├── sent_at (TIMESTAMP)
+└── read_at (TIMESTAMP, NULLABLE)
+
+6.16 ADMIN_USERS TABLE
+----------------------
+admin_users
+├── id (UUID, PRIMARY KEY)
+├── email (VARCHAR, UNIQUE)
+├── password_hash (VARCHAR)
+├── name (VARCHAR)
+├── role (ENUM: super_admin, admin, manager)
+├── is_active (BOOLEAN, DEFAULT true)
+├── last_login_at (TIMESTAMP, NULLABLE)
+├── created_at (TIMESTAMP)
+└── updated_at (TIMESTAMP)
+
+================================================================================
+                        7. ERROR HANDLING STRATEGY
+================================================================================
+
+7.1 ERROR TYPES
+---------------
+
+7.1.1 Failures (Domain Layer - fpdart)
+--------------------------------------
+Using fpdart's Either<Failure, Success> pattern:
+
+abstract class Failure {
+  final String message;
+  final String? code;
+  const Failure({required this.message, this.code});
+}
+
+// Specific Failure Types:
+- ServerFailure: API/server errors
+- NetworkFailure: No internet connection
+- CacheFailure: Local storage errors
+- AuthFailure: Authentication errors
+- ValidationFailure: Input validation errors
+- NotFoundFailure: Resource not found
+- PermissionFailure: Access denied
+
+7.1.2 Exceptions (Data Layer)
+-----------------------------
+class ServerException implements Exception {
+  final String message;
+  final int? statusCode;
+}
+
+class CacheException implements Exception {
+  final String message;
+}
+
+class NetworkException implements Exception {}
+
+7.2 ERROR HANDLING FLOW
+-----------------------
+
+┌─────────────┐     ┌──────────────┐     ┌────────────────┐
+│ Data Source │ --> │  Repository  │ --> │   Use Case     │
+│ (Exception) │     │  (Failure)   │     │ (Either<F,T>)  │
+└─────────────┘     └──────────────┘     └────────────────┘
+                                                 │
+                                                 v
+┌─────────────────────────────────────────────────────────┐
+│                    BLoC Layer                           │
+│  1. Receives Either<Failure, Success>                   │
+│  2. fold() to handle left (failure) or right (success)  │
+│  3. Emit appropriate state                              │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           v
+┌─────────────────────────────────────────────────────────┐
+│                    UI Layer                             │
+│  1. BlocBuilder/BlocListener                            │
+│  2. Show error messages/snackbars                       │
+│  3. Retry options                                       │
+│  4. Fallback UI                                         │
+└─────────────────────────────────────────────────────────┘
+
+7.3 API ERROR RESPONSES
+-----------------------
+Standard API error response format:
+
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human readable message",
+    "details": {} // Optional additional info
+  }
+}
+
+HTTP Status Codes:
+- 400: Bad Request (validation errors)
+- 401: Unauthorized (authentication required)
+- 403: Forbidden (insufficient permissions)
+- 404: Not Found (resource doesn't exist)
+- 409: Conflict (duplicate resource)
+- 422: Unprocessable Entity (business logic error)
+- 429: Too Many Requests (rate limited)
+- 500: Internal Server Error
+- 503: Service Unavailable
+
+7.4 RETRY MECHANISM
+-------------------
+- Network errors: Auto-retry with exponential backoff
+- Server 5xx errors: Retry up to 3 times
+- Rate limit (429): Retry after specified delay
+- User-initiated retry option for failed operations
+
+7.5 OFFLINE ERROR HANDLING
+--------------------------
+- Detect offline status
+- Queue write operations for later sync
+- Show cached data with offline indicator
+- Graceful degradation of features
+
+================================================================================
+                             8. APPENDICES
+================================================================================
+
+APPENDIX A: FLUTTER DEPENDENCIES
+--------------------------------
+dependencies:
+  flutter:
+    sdk: flutter
+  # State Management
+  flutter_bloc: ^8.x.x
+  bloc: ^8.x.x
+  # Functional Programming
+  fpdart: ^1.x.x
+  # Routing
+  go_router: ^13.x.x
+  # Dependency Injection
+  get_it: ^7.x.x
+  injectable: ^2.x.x
+  # Network
+  dio: ^5.x.x
+  connectivity_plus: ^5.x.x
+  # Local Storage
+  objectbox: ^3.x.x
+  flutter_secure_storage: ^9.x.x
+  # Authentication
+  google_sign_in: ^6.x.x
+  # Push Notifications
+  onesignal_flutter: ^5.x.x
+  # UI
+  cached_network_image: ^3.x.x
+  shimmer: ^3.x.x
+  flutter_svg: ^2.x.x
+  carousel_slider: ^4.x.x
+  # Utilities
+  intl: ^0.18.x
+  equatable: ^2.x.x
+  json_annotation: ^4.x.x
+  freezed_annotation: ^2.x.x
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.x.x
+  injectable_generator: ^2.x.x
+  json_serializable: ^6.x.x
+  freezed: ^2.x.x
+  objectbox_generator: ^3.x.x
+  mocktail: ^1.x.x
+  bloc_test: ^9.x.x
+
+APPENDIX B: ADMIN PANEL DEPENDENCIES
+------------------------------------
+{
+  "dependencies": {
+    "react": "^18.x.x",
+    "react-dom": "^18.x.x",
+    "react-router-dom": "^6.x.x",
+    "@tanstack/react-query": "^5.x.x",
+    "axios": "^1.x.x",
+    "zustand": "^4.x.x",
+    "tailwindcss": "^3.x.x",
+    "@headlessui/react": "^1.x.x",
+    "recharts": "^2.x.x",
+    "react-hook-form": "^7.x.x",
+    "zod": "^3.x.x",
+    "date-fns": "^3.x.x"
+  }
+}
+
+APPENDIX C: HONO API DEPENDENCIES
+---------------------------------
+{
+  "dependencies": {
+    "hono": "^4.x.x",
+    "@hono/zod-validator": "^0.x.x",
+    "drizzle-orm": "^0.x.x",
+    "zod": "^3.x.x",
+    "jose": "^5.x.x",
+    "nanoid": "^5.x.x"
+  }
+}
+
+APPENDIX D: OBJECTBOX ENTITIES (Flutter)
+----------------------------------------
+
+@Entity()
+class CachedUser {
+  @Id()
+  int id = 0;
+  String? serverId;
+  String? deviceId;
+  String? email;
+  String? name;
+  String? phone;
+  String? profileImage;
+  bool isGuest = true;
+  String? accessToken;
+  String? refreshToken;
+}
+
+@Entity()
+class CachedProduct {
+  @Id()
+  int id = 0;
+  String serverId;
+  String name;
+  String? description;
+  double price;
+  double? salePrice;
+  String? imageUrl;
+  String categoryId;
+  int lastUpdated;
+}
+
+@Entity()
+class CachedCartItem {
+  @Id()
+  int id = 0;
+  String productServerId;
+  String? variantId;
+  int quantity;
+  bool isSynced = false;
+}
+
+@Entity()
+class CachedWishlistItem {
+  @Id()
+  int id = 0;
+  String productServerId;
+  bool isSynced = false;
+}
+
+@Entity()
+class CachedCategory {
+  @Id()
+  int id = 0;
+  String serverId;
+  String name;
+  String? parentId;
+  String? imageUrl;
+  int displayOrder;
+}
+
+APPENDIX E: BLOC STATE PATTERN EXAMPLE
+--------------------------------------
+
+// Events
+abstract class ProductListEvent extends Equatable {}
+
+class FetchProductsEvent extends ProductListEvent {
+  final int page;
+  final String? categoryId;
+  // ...
+}
+
+// States
+abstract class ProductListState extends Equatable {}
+
+class ProductListInitial extends ProductListState {}
+class ProductListLoading extends ProductListState {}
+class ProductListLoaded extends ProductListState {
+  final List<Product> products;
+  final bool hasMore;
+  // ...
+}
+class ProductListError extends ProductListState {
+  final Failure failure;
+  // ...
+}
+
+// BLoC
+class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
+  final GetProductsUseCase getProductsUseCase;
+  
+  ProductListBloc(this.getProductsUseCase) : super(ProductListInitial()) {
+    on<FetchProductsEvent>(_onFetchProducts);
+  }
+  
+  Future<void> _onFetchProducts(
+    FetchProductsEvent event,
+    Emitter<ProductListState> emit,
+  ) async {
+    emit(ProductListLoading());
+    
+    final result = await getProductsUseCase(
+      ProductsParams(page: event.page, categoryId: event.categoryId),
+    );
+    
+    result.fold(
+      (failure) => emit(ProductListError(failure: failure)),
+      (products) => emit(ProductListLoaded(products: products)),
+    );
+  }
+}
+
+================================================================================
+                           END OF DOCUMENT
+================================================================================
+
+Document prepared for: Brand Shopping Application
+Technology Stack: Flutter + React + Hono + Cloudflare Workers
+Architecture: Clean Architecture with BLoC
+
+For questions or clarifications, please contact the development team.

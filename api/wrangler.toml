@@ -1,0 +1,31 @@
+name = "shopping-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-18"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "shopping-db"
+database_id = "3162216c-e684-423f-bd60-38a9775f37d7"
+
+# R2 Bucket for file storage (enable when R2 is set up)
+# [[r2_buckets]]
+# binding = "STORAGE"
+# bucket_name = "shopping-assets"
+
+# Environment variables (secrets should be set via wrangler secret)
+[vars]
+ENVIRONMENT = "development"
+JWT_EXPIRES_IN = "7d"
+REFRESH_TOKEN_EXPIRES_IN = "30d"
+
+# Google OAuth (set via: wrangler secret put GOOGLE_CLIENT_ID)
+# GOOGLE_CLIENT_ID = "your-google-client-id"
+
+# OneSignal (set via: wrangler secret put ONESIGNAL_APP_ID and ONESIGNAL_API_KEY)
+# ONESIGNAL_APP_ID = "your-onesignal-app-id"
+# ONESIGNAL_API_KEY = "your-onesignal-api-key"
+
+# JWT Secret (set via: wrangler secret put JWT_SECRET)
+# JWT_SECRET = "your-super-secret-jwt-key"
