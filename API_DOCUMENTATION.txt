@@ -1,0 +1,1452 @@
+================================================================================
+                    SHOPPING APP API - IMPLEMENTATION DOCUMENTATION
+================================================================================
+
+Base URL: https://shopping-api.shopping-brand-api.workers.dev
+API Version: v1
+Full API Path: https://shopping-api.shopping-brand-api.workers.dev/api/v1
+
+================================================================================
+                              TABLE OF CONTENTS
+================================================================================
+
+1. Authentication Endpoints
+2. User Endpoints
+3. Product Endpoints
+4. Category Endpoints
+5. Cart Endpoints
+6. Wishlist Endpoints
+7. Order Endpoints
+8. Banner Endpoints
+9. Notification Endpoints
+10. Admin Endpoints
+11. Response Format
+12. Error Codes
+13. Authentication Guide
+
+================================================================================
+                         1. AUTHENTICATION ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/auth
+
+--------------------------------------------------------------------------------
+1.1 POST /auth/google - Google OAuth Sign-In
+--------------------------------------------------------------------------------
+Description: Authenticate user with Google OAuth ID token
+
+Request Body:
+{
+  "idToken": "google-oauth-id-token-from-client"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "accessToken": "jwt-access-token",
+    "refreshToken": "jwt-refresh-token",
+    "user": {
+      "id": "user-nanoid",
+      "email": "user@gmail.com",
+      "name": "User Name",
+      "profileImage": "https://...",
+      "isGuest": false
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+1.2 POST /auth/guest/init - Initialize Guest User
+--------------------------------------------------------------------------------
+Description: Create or retrieve guest user based on device ID
+
+Request Body:
+{
+  "deviceId": "unique-device-identifier"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "accessToken": "jwt-access-token",
+    "refreshToken": "jwt-refresh-token",
+    "user": {
+      "id": "guest-user-id",
+      "isGuest": true
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+1.3 POST /auth/refresh - Refresh Access Token
+--------------------------------------------------------------------------------
+Description: Get new access token using refresh token
+
+Request Body:
+{
+  "refreshToken": "current-refresh-token"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "accessToken": "new-jwt-access-token",
+    "refreshToken": "new-jwt-refresh-token"
+  }
+}
+
+--------------------------------------------------------------------------------
+1.4 POST /auth/logout - Logout User
+--------------------------------------------------------------------------------
+Description: Invalidate all refresh tokens for user
+Headers: Authorization: Bearer <access-token>
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Logged out successfully"
+  }
+}
+
+--------------------------------------------------------------------------------
+1.5 POST /auth/link-guest - Link Guest Account to Google
+--------------------------------------------------------------------------------
+Description: Convert guest account to registered account, merge data
+Headers: Authorization: Bearer <guest-access-token>
+
+Request Body:
+{
+  "idToken": "google-oauth-id-token"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "accessToken": "new-access-token",
+    "refreshToken": "new-refresh-token",
+    "user": { ... },
+    "merged": true  // true if merged with existing account
+  }
+}
+
+================================================================================
+                            2. USER ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/users
+Authentication: Required (Bearer Token)
+
+--------------------------------------------------------------------------------
+2.1 GET /users/me - Get Current User Profile
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "id": "user-id",
+    "email": "user@email.com",
+    "name": "User Name",
+    "phone": "+1234567890",
+    "profileImage": "https://...",
+    "isGuest": false,
+    "notificationPreferences": {
+      "orders": true,
+      "promotions": true,
+      "priceDrops": true,
+      "stockAlerts": true
+    },
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+}
+
+--------------------------------------------------------------------------------
+2.2 PUT /users/me - Update User Profile
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "name": "New Name",        // optional
+  "phone": "+1234567890"     // optional
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "id": "user-id",
+    "email": "user@email.com",
+    "name": "New Name",
+    "phone": "+1234567890",
+    ...
+  }
+}
+
+--------------------------------------------------------------------------------
+2.3 GET /users/me/addresses - Get User Addresses
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Response (200 OK):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "address-id",
+      "label": "Home",
+      "recipientName": "John Doe",
+      "phone": "+1234567890",
+      "addressLine1": "123 Main St",
+      "addressLine2": "Apt 4",
+      "city": "New York",
+      "state": "NY",
+      "postalCode": "10001",
+      "country": "USA",
+      "isDefault": true
+    }
+  ]
+}
+
+--------------------------------------------------------------------------------
+2.4 POST /users/me/addresses - Add New Address
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "label": "Home",
+  "recipientName": "John Doe",
+  "phone": "+1234567890",
+  "addressLine1": "123 Main St",
+  "addressLine2": "Apt 4",           // optional
+  "city": "New York",
+  "state": "NY",
+  "postalCode": "10001",
+  "country": "USA",
+  "isDefault": false                  // optional
+}
+
+Response (201 Created):
+{
+  "success": true,
+  "data": { ... address object ... }
+}
+
+--------------------------------------------------------------------------------
+2.5 PUT /users/me/addresses/:id - Update Address
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Address ID
+
+Request Body: (all fields optional)
+{
+  "label": "Office",
+  "recipientName": "John Doe",
+  ...
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": { ... updated address ... }
+}
+
+--------------------------------------------------------------------------------
+2.6 DELETE /users/me/addresses/:id - Delete Address
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Address ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Address deleted successfully"
+  }
+}
+
+--------------------------------------------------------------------------------
+2.7 POST /users/me/device - Register Device for Push Notifications
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "playerId": "onesignal-player-id"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Device registered successfully"
+  }
+}
+
+--------------------------------------------------------------------------------
+2.8 PUT /users/me/notification-preferences - Update Notification Settings
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "orders": true,
+  "promotions": false,
+  "priceDrops": true,
+  "stockAlerts": true
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": { ... preferences ... }
+}
+
+================================================================================
+                           3. PRODUCT ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/products
+Authentication: Not required for GET endpoints
+
+--------------------------------------------------------------------------------
+3.1 GET /products - List Products (Paginated)
+--------------------------------------------------------------------------------
+Query Parameters:
+- page (number, default: 1) - Page number
+- limit (number, default: 20, max: 50) - Items per page
+- categoryId (string) - Filter by category
+- search (string) - Search term
+- minPrice (number) - Minimum price filter
+- maxPrice (number) - Maximum price filter
+- sort (enum) - "price_asc", "price_desc", "newest", "popular", "rating"
+- featured (boolean) - Filter featured products only
+
+Example: GET /products?page=1&limit=10&categoryId=cat123&sort=price_asc
+
+Response (200 OK):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "prod-123",
+      "sku": "SKU001",
+      "name": "Product Name",
+      "slug": "product-name",
+      "shortDescription": "Short description",
+      "basePrice": 99.99,
+      "salePrice": 79.99,
+      "categoryId": "cat-123",
+      "brand": "Brand Name",
+      "stockQuantity": 50,
+      "isFeatured": true,
+      "averageRating": 4.5,
+      "reviewCount": 25,
+      "imageUrl": "https://...",
+      "createdAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 100,
+    "totalPages": 10
+  }
+}
+
+--------------------------------------------------------------------------------
+3.2 GET /products/:id - Get Product Details
+--------------------------------------------------------------------------------
+Path Params: id - Product ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "id": "prod-123",
+    "sku": "SKU001",
+    "name": "Product Name",
+    "slug": "product-name",
+    "shortDescription": "Short description",
+    "longDescription": "Detailed description...",
+    "basePrice": 99.99,
+    "salePrice": 79.99,
+    "categoryId": "cat-123",
+    "brand": "Brand Name",
+    "stockQuantity": 50,
+    "isFeatured": true,
+    "isActive": true,
+    "averageRating": 4.5,
+    "reviewCount": 25,
+    "metaTitle": "SEO Title",
+    "metaDescription": "SEO Description",
+    "images": [
+      {
+        "id": "img-1",
+        "imageUrl": "https://...",
+        "altText": "Product image",
+        "displayOrder": 0,
+        "isPrimary": true
+      }
+    ],
+    "variants": [
+      {
+        "id": "var-1",
+        "name": "Red - Large",
+        "sku": "SKU001-RED-L",
+        "priceModifier": 5.00,
+        "stockQuantity": 10,
+        "attributes": {"color": "Red", "size": "Large"},
+        "imageUrl": "https://..."
+      }
+    ],
+    "category": {
+      "id": "cat-123",
+      "name": "Category Name",
+      "slug": "category-name"
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+3.3 GET /products/search - Search Products
+--------------------------------------------------------------------------------
+Query Parameters:
+- search (string, required) - Search query
+- page (number) - Page number
+- limit (number) - Items per page
+
+Example: GET /products/search?search=shoes&page=1
+
+Response: Same as GET /products
+
+--------------------------------------------------------------------------------
+3.4 GET /products/featured - Get Featured Products
+--------------------------------------------------------------------------------
+Query Parameters:
+- page (number) - Page number
+- limit (number) - Items per page
+
+Response: Array of product objects
+
+--------------------------------------------------------------------------------
+3.5 GET /products/bestsellers - Get Bestseller Products
+--------------------------------------------------------------------------------
+Query Parameters:
+- page (number) - Page number
+- limit (number) - Items per page
+
+Response: Array of product objects (ordered by review count)
+
+--------------------------------------------------------------------------------
+3.6 GET /products/new-arrivals - Get New Arrivals
+--------------------------------------------------------------------------------
+Query Parameters:
+- page (number) - Page number
+- limit (number) - Items per page
+
+Response: Array of product objects (ordered by creation date)
+
+--------------------------------------------------------------------------------
+3.7 GET /products/:id/reviews - Get Product Reviews
+--------------------------------------------------------------------------------
+Path Params: id - Product ID
+Query Parameters:
+- page (number) - Page number
+- limit (number) - Items per page
+
+Response (200 OK):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "review-123",
+      "productId": "prod-123",
+      "userId": "user-123",
+      "rating": 5,
+      "title": "Great product!",
+      "content": "Really enjoyed this product...",
+      "isVerifiedPurchase": true,
+      "helpfulCount": 10,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "user": {
+        "id": "user-123",
+        "name": "John D.",
+        "profileImage": "https://..."
+      }
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 50
+  }
+}
+
+--------------------------------------------------------------------------------
+3.8 POST /products/:id/reviews - Submit Product Review
+--------------------------------------------------------------------------------
+Authentication: Required (registered users only)
+Path Params: id - Product ID
+
+Request Body:
+{
+  "rating": 5,                    // 1-5
+  "title": "Great product!",      // optional
+  "content": "Really enjoyed..."  // min 10 chars
+}
+
+Response (201 Created):
+{
+  "success": true,
+  "data": { ... review object ... }
+}
+
+--------------------------------------------------------------------------------
+3.9 GET /products/:id/related - Get Related Products
+--------------------------------------------------------------------------------
+Path Params: id - Product ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": [ ... array of products from same category ... ]
+}
+
+================================================================================
+                          4. CATEGORY ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/categories
+Authentication: Not required
+
+--------------------------------------------------------------------------------
+4.1 GET /categories - List All Categories (Hierarchical)
+--------------------------------------------------------------------------------
+Response (200 OK):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "cat-123",
+      "name": "Electronics",
+      "slug": "electronics",
+      "description": "Electronic devices",
+      "imageUrl": "https://...",
+      "displayOrder": 0,
+      "isActive": true,
+      "children": [
+        {
+          "id": "cat-456",
+          "name": "Phones",
+          "slug": "phones",
+          "parentId": "cat-123",
+          ...
+        }
+      ]
+    }
+  ]
+}
+
+--------------------------------------------------------------------------------
+4.2 GET /categories/flat - List All Categories (Flat)
+--------------------------------------------------------------------------------
+Response: Array of category objects without hierarchy
+
+--------------------------------------------------------------------------------
+4.3 GET /categories/:id - Get Category Details
+--------------------------------------------------------------------------------
+Path Params: id - Category ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "id": "cat-123",
+    "name": "Electronics",
+    "slug": "electronics",
+    "description": "...",
+    "imageUrl": "https://...",
+    "subcategories": [ ... ],
+    "parent": { ... } // if has parent
+  }
+}
+
+--------------------------------------------------------------------------------
+4.4 GET /categories/:id/products - Get Products in Category
+--------------------------------------------------------------------------------
+Path Params: id - Category ID
+Query Parameters:
+- page (number) - Page number
+- limit (number) - Items per page
+
+Response: Same as GET /products with meta
+
+================================================================================
+                            5. CART ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/cart
+Authentication: Required
+
+--------------------------------------------------------------------------------
+5.1 GET /cart - Get User Cart
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "cart-item-123",
+        "productId": "prod-123",
+        "variantId": "var-123",
+        "quantity": 2,
+        "product": {
+          "id": "prod-123",
+          "name": "Product Name",
+          "sku": "SKU001",
+          "basePrice": 99.99,
+          "salePrice": 79.99,
+          "stockQuantity": 50,
+          "imageUrl": "https://..."
+        },
+        "variant": {
+          "id": "var-123",
+          "name": "Red - Large",
+          "sku": "SKU001-RED-L",
+          "priceModifier": 5.00,
+          "stockQuantity": 10,
+          "attributes": {"color": "Red", "size": "Large"}
+        },
+        "unitPrice": 84.99,
+        "totalPrice": 169.98,
+        "addedAt": "2024-01-01T00:00:00Z"
+      }
+    ],
+    "itemCount": 1,
+    "subtotal": 169.98
+  }
+}
+
+--------------------------------------------------------------------------------
+5.2 POST /cart/items - Add Item to Cart
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "productId": "prod-123",
+  "variantId": "var-123",    // optional
+  "quantity": 1              // default: 1
+}
+
+Response (201 Created):
+{
+  "success": true,
+  "data": {
+    "message": "Added to cart",
+    "id": "cart-item-id"
+  }
+}
+
+--------------------------------------------------------------------------------
+5.3 PUT /cart/items/:id - Update Cart Item Quantity
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Cart Item ID
+
+Request Body:
+{
+  "quantity": 3
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Cart updated",
+    "quantity": 3
+  }
+}
+
+--------------------------------------------------------------------------------
+5.4 DELETE /cart/items/:id - Remove Item from Cart
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Cart Item ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Item removed from cart"
+  }
+}
+
+--------------------------------------------------------------------------------
+5.5 DELETE /cart - Clear Entire Cart
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Cart cleared"
+  }
+}
+
+--------------------------------------------------------------------------------
+5.6 POST /cart/merge - Merge Guest Cart with User Cart
+--------------------------------------------------------------------------------
+Description: Call after guest logs in to merge their cart
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "guestUserId": "guest-user-id"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Cart merged successfully"
+  }
+}
+
+--------------------------------------------------------------------------------
+5.7 POST /cart/coupon - Apply Coupon Code
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "code": "SAVE20"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "coupon": {
+      "id": "coupon-123",
+      "code": "SAVE20",
+      "discountType": "percentage",
+      "discountValue": 20
+    },
+    "discount": 33.99,
+    "subtotal": 169.98,
+    "total": 135.99
+  }
+}
+
+Error Response (400 Bad Request):
+{
+  "success": false,
+  "error": {
+    "code": "BAD_REQUEST",
+    "message": "Coupon is not valid at this time"
+  }
+}
+
+================================================================================
+                          6. WISHLIST ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/wishlist
+Authentication: Required
+
+--------------------------------------------------------------------------------
+6.1 GET /wishlist - Get User Wishlist
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "wishlist-item-123",
+        "productId": "prod-123",
+        "addedAt": "2024-01-01T00:00:00Z",
+        "product": {
+          "id": "prod-123",
+          "name": "Product Name",
+          "slug": "product-name",
+          "basePrice": 99.99,
+          "salePrice": 79.99,
+          "stockQuantity": 50,
+          "averageRating": 4.5,
+          "isActive": true,
+          "imageUrl": "https://..."
+        }
+      }
+    ],
+    "itemCount": 1
+  }
+}
+
+--------------------------------------------------------------------------------
+6.2 POST /wishlist/items - Add to Wishlist
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "productId": "prod-123"
+}
+
+Response (201 Created):
+{
+  "success": true,
+  "data": {
+    "message": "Added to wishlist",
+    "id": "wishlist-item-id"
+  }
+}
+
+--------------------------------------------------------------------------------
+6.3 DELETE /wishlist/items/:id - Remove from Wishlist
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Wishlist Item ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Removed from wishlist"
+  }
+}
+
+--------------------------------------------------------------------------------
+6.4 DELETE /wishlist/product/:productId - Remove by Product ID
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: productId - Product ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Removed from wishlist"
+  }
+}
+
+--------------------------------------------------------------------------------
+6.5 POST /wishlist/merge - Merge Guest Wishlist
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "guestUserId": "guest-user-id"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Wishlist merged successfully"
+  }
+}
+
+--------------------------------------------------------------------------------
+6.6 POST /wishlist/items/:id/move-to-cart - Move Item to Cart
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Wishlist Item ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Moved to cart"
+  }
+}
+
+================================================================================
+                           7. ORDER ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/orders
+Authentication: Required
+
+--------------------------------------------------------------------------------
+7.1 GET /orders - List User Orders
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Query Parameters:
+- page (number) - Page number
+- limit (number) - Items per page
+- status (enum) - Filter by status
+
+Status Values: "placed", "confirmed", "processing", "shipped", 
+               "out_for_delivery", "delivered", "cancelled", "returned"
+
+Response (200 OK):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "order-123",
+      "orderNumber": "ORD-ABC123",
+      "status": "delivered",
+      "subtotal": 169.98,
+      "discountAmount": 20.00,
+      "shippingAmount": 5.99,
+      "taxAmount": 0,
+      "totalAmount": 155.97,
+      "paymentMethod": "cod",
+      "paymentStatus": "paid",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "items": [ ... ],
+      "itemCount": 2
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 5,
+    "totalPages": 1
+  }
+}
+
+--------------------------------------------------------------------------------
+7.2 POST /orders - Create New Order
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "shippingAddressId": "address-123",  // OR shippingAddress object
+  "shippingAddress": {                  // if no saved address
+    "recipientName": "John Doe",
+    "phone": "+1234567890",
+    "addressLine1": "123 Main St",
+    "addressLine2": "Apt 4",
+    "city": "New York",
+    "state": "NY",
+    "postalCode": "10001",
+    "country": "USA"
+  },
+  "paymentMethod": "cod",              // "cod", "card", "upi", "wallet"
+  "notes": "Please leave at door",     // optional
+  "couponCode": "SAVE20"               // optional
+}
+
+Response (201 Created):
+{
+  "success": true,
+  "data": {
+    "id": "order-123",
+    "orderNumber": "ORD-ABC123",
+    "status": "placed",
+    "subtotal": 169.98,
+    "discountAmount": 20.00,
+    "shippingAmount": 0,
+    "taxAmount": 0,
+    "totalAmount": 149.98,
+    "shippingAddress": { ... },
+    "paymentMethod": "cod",
+    "paymentStatus": "pending",
+    "items": [
+      {
+        "id": "order-item-123",
+        "productId": "prod-123",
+        "productName": "Product Name",
+        "variantName": "Red - Large",
+        "quantity": 2,
+        "unitPrice": 84.99,
+        "totalPrice": 169.98
+      }
+    ],
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+}
+
+--------------------------------------------------------------------------------
+7.3 GET /orders/:id - Get Order Details
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Order ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "id": "order-123",
+    "orderNumber": "ORD-ABC123",
+    "status": "shipped",
+    "subtotal": 169.98,
+    "discountAmount": 20.00,
+    "shippingAmount": 0,
+    "taxAmount": 0,
+    "totalAmount": 149.98,
+    "couponId": "coupon-123",
+    "shippingAddress": { ... },
+    "paymentMethod": "cod",
+    "paymentStatus": "pending",
+    "paymentReference": null,
+    "notes": "Please leave at door",
+    "shippedAt": "2024-01-02T00:00:00Z",
+    "deliveredAt": null,
+    "cancelledAt": null,
+    "cancellationReason": null,
+    "items": [
+      {
+        "id": "order-item-123",
+        "productId": "prod-123",
+        "productName": "Product Name",
+        "variantName": "Red - Large",
+        "quantity": 2,
+        "unitPrice": 84.99,
+        "totalPrice": 169.98,
+        "imageUrl": "https://..."
+      }
+    ],
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-02T00:00:00Z"
+  }
+}
+
+--------------------------------------------------------------------------------
+7.4 PUT /orders/:id/cancel - Cancel Order
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Order ID
+
+Request Body:
+{
+  "reason": "Changed my mind"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    ... order with status "cancelled" ...
+  }
+}
+
+Error (400 Bad Request):
+- Cannot cancel shipped/delivered orders
+
+--------------------------------------------------------------------------------
+7.5 POST /orders/:id/return - Initiate Return
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Order ID (must be delivered)
+
+Request Body:
+{
+  "reason": "Product damaged",
+  "items": [
+    {
+      "orderItemId": "order-item-123",
+      "quantity": 1
+    }
+  ]
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    ... order with status "returned" ...
+  }
+}
+
+--------------------------------------------------------------------------------
+7.6 POST /orders/:id/reorder - Reorder Previous Order
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Order ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Added 2 items to cart, 1 items skipped (unavailable)",
+    "addedCount": 2,
+    "skippedCount": 1
+  }
+}
+
+================================================================================
+                          8. BANNER ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/banners
+Authentication: Not required
+
+--------------------------------------------------------------------------------
+8.1 GET /banners - Get All Active Banners
+--------------------------------------------------------------------------------
+Response (200 OK):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "banner-123",
+      "title": "Summer Sale",
+      "imageUrl": "https://...",
+      "linkType": "category",        // "product", "category", "external", "none"
+      "linkValue": "cat-123",
+      "bannerType": "hero",          // "hero", "category", "promotional", "flash_sale"
+      "displayOrder": 0,
+      "startsAt": "2024-01-01T00:00:00Z",
+      "endsAt": "2024-01-31T23:59:59Z",
+      "isActive": true
+    }
+  ]
+}
+
+--------------------------------------------------------------------------------
+8.2 GET /banners/hero - Get Hero Banners Only
+--------------------------------------------------------------------------------
+Response: Array of hero banners
+
+--------------------------------------------------------------------------------
+8.3 GET /banners/:type - Get Banners by Type
+--------------------------------------------------------------------------------
+Path Params: type - "hero", "category", "promotional", "flash_sale"
+
+Response: Array of banners of specified type
+
+================================================================================
+                        9. NOTIFICATION ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/notifications
+Authentication: Required
+
+--------------------------------------------------------------------------------
+9.1 POST /notifications/register - Register Device
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "playerId": "onesignal-player-id"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Device registered successfully"
+  }
+}
+
+--------------------------------------------------------------------------------
+9.2 GET /notifications - Get Notification History
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Query Parameters:
+- page (number) - Page number
+- limit (number) - Items per page
+
+Response (200 OK):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "notif-123",
+      "title": "Order Shipped",
+      "body": "Your order has been shipped",
+      "data": { "orderId": "order-123" },
+      "notificationType": "order",
+      "isRead": false,
+      "sentAt": "2024-01-01T00:00:00Z",
+      "readAt": null
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 10,
+    "unreadCount": 3
+  }
+}
+
+--------------------------------------------------------------------------------
+9.3 PUT /notifications/:id/read - Mark as Read
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+Path Params: id - Notification ID
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Notification marked as read"
+  }
+}
+
+--------------------------------------------------------------------------------
+9.4 PUT /notifications/read-all - Mark All as Read
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "All notifications marked as read"
+  }
+}
+
+--------------------------------------------------------------------------------
+9.5 GET /notifications/preferences - Get Notification Preferences
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "orders": true,
+    "promotions": true,
+    "priceDrops": true,
+    "stockAlerts": true
+  }
+}
+
+--------------------------------------------------------------------------------
+9.6 PUT /notifications/preferences - Update Preferences
+--------------------------------------------------------------------------------
+Headers: Authorization: Bearer <access-token>
+
+Request Body:
+{
+  "orders": true,
+  "promotions": false,
+  "priceDrops": true,
+  "stockAlerts": false
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": { ... updated preferences ... }
+}
+
+================================================================================
+                          10. ADMIN ENDPOINTS
+================================================================================
+
+Base Path: /api/v1/admin
+Authentication: Required (Admin Token)
+
+--------------------------------------------------------------------------------
+10.1 POST /admin/login - Admin Login
+--------------------------------------------------------------------------------
+Request Body:
+{
+  "email": "admin@example.com",
+  "password": "password123"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "token": "admin-jwt-token",
+    "admin": {
+      "id": "admin-123",
+      "email": "admin@example.com",
+      "name": "Admin User",
+      "role": "super_admin"
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+10.2 Dashboard Endpoints
+--------------------------------------------------------------------------------
+GET  /admin/dashboard/stats          - Get dashboard statistics
+GET  /admin/dashboard/sales          - Get sales data (query: period=week|month|year)
+GET  /admin/dashboard/orders         - Get recent orders
+GET  /admin/dashboard/products/low-stock    - Get low stock products
+GET  /admin/dashboard/products/top-selling  - Get top selling products
+
+--------------------------------------------------------------------------------
+10.3 Product Management
+--------------------------------------------------------------------------------
+GET    /admin/products                - List all products
+GET    /admin/products/:id            - Get product details
+POST   /admin/products                - Create product
+PUT    /admin/products/:id            - Update product
+DELETE /admin/products/:id            - Delete product (soft delete)
+POST   /admin/products/:id/images     - Add product image
+DELETE /admin/products/:id/images/:imageId  - Delete product image
+POST   /admin/products/:id/variants   - Add product variant
+PUT    /admin/products/:id/variants/:variantId   - Update variant
+DELETE /admin/products/:id/variants/:variantId   - Delete variant
+
+--------------------------------------------------------------------------------
+10.4 Category Management
+--------------------------------------------------------------------------------
+GET    /admin/categories              - List all categories
+GET    /admin/categories/:id          - Get category details
+POST   /admin/categories              - Create category
+PUT    /admin/categories/:id          - Update category
+DELETE /admin/categories/:id          - Delete category (soft delete)
+
+--------------------------------------------------------------------------------
+10.5 Order Management
+--------------------------------------------------------------------------------
+GET    /admin/orders                  - List all orders
+GET    /admin/orders/:id              - Get order details with user info
+PUT    /admin/orders/:id/status       - Update order status
+
+Request Body for status update:
+{
+  "status": "shipped",
+  "trackingNumber": "TRACK123",  // optional
+  "notes": "Shipped via FedEx"   // optional
+}
+
+--------------------------------------------------------------------------------
+10.6 User Management
+--------------------------------------------------------------------------------
+GET    /admin/users                   - List all users
+GET    /admin/users/:id               - Get user details with orders count
+PUT    /admin/users/:id/status        - Activate/deactivate user
+GET    /admin/users/:id/orders        - Get user's orders
+
+--------------------------------------------------------------------------------
+10.7 Banner Management
+--------------------------------------------------------------------------------
+GET    /admin/banners                 - List all banners
+GET    /admin/banners/:id             - Get banner details
+POST   /admin/banners                 - Create banner
+PUT    /admin/banners/:id             - Update banner
+DELETE /admin/banners/:id             - Delete banner
+
+--------------------------------------------------------------------------------
+10.8 Coupon Management
+--------------------------------------------------------------------------------
+GET    /admin/coupons                 - List all coupons
+GET    /admin/coupons/:id             - Get coupon with usage history
+POST   /admin/coupons                 - Create coupon
+PUT    /admin/coupons/:id             - Update coupon
+DELETE /admin/coupons/:id             - Delete coupon
+
+--------------------------------------------------------------------------------
+10.9 Review Moderation
+--------------------------------------------------------------------------------
+GET    /admin/reviews                 - List all reviews
+PUT    /admin/reviews/:id/approve     - Approve review
+PUT    /admin/reviews/:id/reject      - Reject and delete review
+DELETE /admin/reviews/:id             - Delete review
+
+--------------------------------------------------------------------------------
+10.10 Push Notifications
+--------------------------------------------------------------------------------
+POST   /admin/notifications/send      - Send push notification
+
+Request Body:
+{
+  "title": "Flash Sale!",
+  "body": "50% off all items today!",
+  "userIds": ["user-1", "user-2"],  // optional - specific users
+  "segment": "all",                  // optional - "all", "registered", "guests"
+  "data": { "link": "/sale" }        // optional - custom data
+}
+
+================================================================================
+                          11. RESPONSE FORMAT
+================================================================================
+
+All endpoints return responses in the following format:
+
+SUCCESS RESPONSE:
+{
+  "success": true,
+  "data": { ... response data ... },
+  "meta": {                          // Optional - for paginated results
+    "page": 1,
+    "limit": 20,
+    "total": 100,
+    "totalPages": 5
+  }
+}
+
+ERROR RESPONSE:
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human readable message",
+    "details": { ... }               // Optional - validation errors etc.
+  }
+}
+
+================================================================================
+                           12. ERROR CODES
+================================================================================
+
+HTTP Status Code  |  Error Code          |  Description
+------------------|----------------------|-----------------------------
+400               |  BAD_REQUEST         |  Invalid request data
+400               |  VALIDATION_ERROR    |  Request validation failed
+401               |  UNAUTHORIZED        |  Missing or invalid token
+403               |  FORBIDDEN           |  Insufficient permissions
+404               |  NOT_FOUND           |  Resource not found
+409               |  CONFLICT            |  Resource already exists
+422               |  UNPROCESSABLE       |  Business logic error
+429               |  RATE_LIMITED        |  Too many requests
+500               |  SERVER_ERROR        |  Internal server error
+
+================================================================================
+                        13. AUTHENTICATION GUIDE
+================================================================================
+
+1. GUEST USER FLOW:
+   - App calls POST /auth/guest/init with device ID
+   - Receives accessToken and refreshToken
+   - Use accessToken for all authenticated requests
+   - Guest can use cart, wishlist, place orders
+
+2. GOOGLE LOGIN FLOW:
+   - User signs in with Google in app
+   - App receives ID token from Google
+   - App calls POST /auth/google with idToken
+   - Receives accessToken, refreshToken, and user info
+
+3. GUEST TO REGISTERED FLOW:
+   - Guest user decides to sign in with Google
+   - App calls POST /auth/link-guest with Google idToken
+   - Backend merges cart, wishlist, orders
+   - Guest becomes registered user
+
+4. TOKEN REFRESH FLOW:
+   - When accessToken expires (7 days default)
+   - Call POST /auth/refresh with refreshToken
+   - Receive new accessToken and refreshToken
+
+5. USING TOKENS:
+   - Include in all authenticated requests:
+     Authorization: Bearer <accessToken>
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================
+
+Document Version: 1.0
+Last Updated: January 18, 2026
+API Base URL: https://shopping-api.shopping-brand-api.workers.dev/api/v1
