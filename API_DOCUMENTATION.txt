@@ -1357,9 +1357,36 @@ DELETE /admin/reviews/:id             - Delete review
 --------------------------------------------------------------------------------
 10.10 Push Notifications
 --------------------------------------------------------------------------------
+GET    /admin/notifications           - List all sent notifications (paginated)
 POST   /admin/notifications/send      - Send push notification
 
-Request Body:
+Query Parameters for GET:
+- page (number, default: 1) - Page number
+- limit (number, default: 20, max: 50) - Items per page
+
+Response for GET (200 OK):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "notif-123",
+      "title": "Flash Sale!",
+      "body": "50% off all items today!",
+      "notificationType": "general",
+      "userId": null,
+      "data": { "link": "/sale" },
+      "sentAt": "2026-01-18T00:00:00Z",
+      "isRead": false
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 10
+  }
+}
+
+Request Body for POST:
 {
   "title": "Flash Sale!",
   "body": "50% off all items today!",

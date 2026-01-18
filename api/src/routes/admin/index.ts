@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { createDb, schema } from "../../db";
 import {
@@ -9,8 +9,9 @@ import {
     adminLoginSchema,
     createAdminSchema,
     sendNotificationSchema,
+    paginationSchema,
 } from "../../types";
-import { success, errors } from "../../utils/response";
+import { success, successWithMeta, errors } from "../../utils/response";
 import { adminMiddleware, requireRole } from "../../middleware/admin";
 import { generateAdminToken } from "../../utils/jwt";
 
@@ -117,6 +118,36 @@ admin.post(
         });
 
         return success(c, adminUser, 201);
+    }
+);
+
+// ============================================================================
+// Get Notification History (Admin)
+// ============================================================================
+admin.get(
+    "/notifications",
+    adminMiddleware,
+    zValidator("query", paginationSchema),
+    async (c) => {
+        const { page, limit } = c.req.valid("query");
+        const offset = (page - 1) * limit;
+        const db = createDb(c.env.DB);
+
+        const notificationsData = await db.query.notifications.findMany({
+            orderBy: desc(schema.notifications.sentAt),
+            limit,
+            offset,
+        });
+
+        const countResult = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.notifications);
+
+        return successWithMeta(c, notificationsData, {
+            page,
+            limit,
+            total: countResult[0]?.count || 0,
+        });
     }
 );
 

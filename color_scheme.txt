@@ -1,0 +1,11 @@
+Shopping App UI Color Scheme
+
+Primary Background:  #FFFFFF (Pure White - App backgrounds)
+Secondary Surface:   #F9F9F9 (Off-white - Card surfaces and input backgrounds)
+Primary Action:      #000000 (Pure Black - Buttons, primary icons, and headings)
+Primary Text:        #1A1A1A (Rich Black - Body text and labels)
+Secondary Text:      #757575 (Medium Grey - Descriptions and subtext)
+Text Hint/Disabled:  #BDBDBD (Light Grey - Placeholder text)
+Accent (Rating):     #FFC107 (Amber - Star ratings and highlight icons)
+Divider/Borders:     #E0E0E0 (Grey - Separators between list items)
+Notification/Badge:  #000000 (Black - Often used for 'New' or 'Best Seller' badges)
