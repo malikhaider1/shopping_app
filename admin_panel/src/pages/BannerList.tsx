@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { AddBannerModal } from '../components/admin/AddBannerModal.tsx';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Pagination } from '../components/admin/Pagination.tsx';
 import api from '../lib/api';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -17,11 +18,15 @@ export const BannerList = () => {
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedBanner, setSelectedBanner] = useState<any>(null);
+    const [page, setPage] = useState(1);
+    const limit = 6;
 
     const { data: bannersData, isLoading } = useQuery({
-        queryKey: ['admin-banners'],
+        queryKey: ['admin-banners', page],
         queryFn: async () => {
-            const res = await api.get('/admin/banners');
+            const res = await api.get('/admin/banners', {
+                params: { page, limit }
+            });
             return res.data;
         }
     });
@@ -156,6 +161,14 @@ export const BannerList = () => {
                     <span className="font-black text-[10px] uppercase tracking-[0.2em] text-text-hint group-hover:text-primary">Initialize New Node</span>
                 </button>
             </div>
+
+            <Pagination
+                currentPage={page}
+                totalPages={bannersData?.meta?.totalPages || 0}
+                totalResults={bannersData?.meta?.total || 0}
+                limit={limit}
+                onPageChange={setPage}
+            />
         </motion.div>
     );
 };

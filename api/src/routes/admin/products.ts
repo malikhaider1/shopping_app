@@ -131,10 +131,13 @@ products.post("/", zValidator("json", createProductSchema), async (c) => {
     const data = c.req.valid("json");
     const db = createDb(c.env.DB);
 
-    // Check if SKU already exists
+    // Auto-generate SKU if not provided
+    const sku = data.sku || `SKU-${Date.now().toString(36).toUpperCase()}-${nanoid(4).toUpperCase()}`;
+
+    // Check if SKU or slug already exists
     const existingProduct = await db.query.products.findFirst({
         where: or(
-            eq(schema.products.sku, data.sku),
+            eq(schema.products.sku, sku),
             eq(schema.products.slug, data.slug)
         ),
     });
@@ -147,6 +150,7 @@ products.post("/", zValidator("json", createProductSchema), async (c) => {
     await db.insert(schema.products).values({
         id: productId,
         ...data,
+        sku, // Use generated or provided SKU
     });
 
     const product = await db.query.products.findFirst({

@@ -7,6 +7,7 @@ import {
     Loader2
 } from 'lucide-react';
 import { OrderDetailsModal } from '../components/admin/OrderDetailsModal.tsx';
+import { Pagination } from '../components/admin/Pagination.tsx';
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/api';
 import { motion } from 'framer-motion';
@@ -26,7 +27,7 @@ const statusConfig: Record<string, { label: string, color: string }> = {
 export const OrderList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
-    const [page] = useState(1);
+    const [page, setPage] = useState(1);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const limit = 10;
@@ -46,6 +47,40 @@ export const OrderList = () => {
         setIsModalOpen(true);
     };
 
+    const handleExport = () => {
+        if (!ordersData?.data || ordersData.data.length === 0) {
+            alert('No orders to export');
+            return;
+        }
+
+        const headers = ['Order Number', 'Date', 'Customer', 'Email', 'Items', 'Total', 'Status', 'Payment Status'];
+        const csvData = ordersData.data.map((order: any) => [
+            order.orderNumber,
+            format(new Date(order.createdAt), 'yyyy-MM-dd HH:mm'),
+            order.user?.name || 'Guest',
+            order.user?.email || 'N/A',
+            order.itemsCount,
+            order.totalAmount,
+            order.status,
+            order.paymentStatus
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...csvData.map((row: any[]) => row.join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `orders_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -62,7 +97,10 @@ export const OrderList = () => {
                         <Calendar size={18} />
                         Historical Range
                     </button>
-                    <button className="bg-primary text-white px-8 py-3 rounded-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-xl shadow-primary/10 active:scale-95">
+                    <button
+                        onClick={handleExport}
+                        className="bg-primary text-white px-8 py-3 rounded-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-xl shadow-primary/10 active:scale-95"
+                    >
                         <Download size={20} />
                         Export Ledger
                     </button>
@@ -171,6 +209,14 @@ export const OrderList = () => {
                         </table>
                     )}
                 </div>
+
+                <Pagination
+                    currentPage={page}
+                    totalPages={ordersData?.meta?.totalPages || 0}
+                    totalResults={ordersData?.meta?.total || 0}
+                    limit={limit}
+                    onPageChange={setPage}
+                />
             </div>
         </motion.div>
     );

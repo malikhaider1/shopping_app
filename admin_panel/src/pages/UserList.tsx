@@ -8,6 +8,7 @@ import {
     Loader2
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Pagination } from '../components/admin/Pagination.tsx';
 import api from '../lib/api';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -16,7 +17,7 @@ export const UserList = () => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [tab, setTab] = useState<'All' | 'Active' | 'Blocked' | 'Guests'>('All');
-    const [page] = useState(1);
+    const [page, setPage] = useState(1);
     const limit = 10;
 
     const { data: usersData, isLoading } = useQuery({
@@ -171,6 +172,14 @@ export const UserList = () => {
                         </table>
                     )}
                 </div>
+
+                <Pagination
+                    currentPage={page}
+                    totalPages={usersData?.meta?.totalPages || 0}
+                    totalResults={usersData?.meta?.total || 0}
+                    limit={limit}
+                    onPageChange={setPage}
+                />
             </div>
         </motion.div>
     );

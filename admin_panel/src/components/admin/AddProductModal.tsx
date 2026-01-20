@@ -199,6 +199,7 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
         // Clean up optional empty strings to undefined
         if (!payload.brand) delete payload.brand;
         if (!payload.categoryId) delete payload.categoryId;
+        if (!payload.sku) delete payload.sku; // Let backend auto-generate SKU if not provided
         if (payload.categoryId === 'cat-123') delete payload.categoryId; // Remove dummy default
 
         mutation.mutate(payload);
@@ -247,13 +248,12 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
 
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">SKU (Unique Code) *</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">SKU (Unique Code) <span className="text-text-secondary">(auto-generated)</span></label>
                             <input
                                 type="text"
                                 value={formData.sku}
                                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                                required
-                                placeholder="e.g. PROD-001"
+                                placeholder="Leave empty to auto-generate"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
                         </div>

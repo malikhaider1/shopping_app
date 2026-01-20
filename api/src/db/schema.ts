@@ -334,3 +334,15 @@ export const refreshTokens = sqliteTable("refresh_tokens", {
     expiresAt: text("expires_at").notNull(),
     createdAt: text("created_at").default(sql`(datetime('now'))`).notNull(),
 });
+
+// ============================================================================
+// SETTINGS
+// ============================================================================
+
+export const settings = sqliteTable("settings", {
+    id: text("id").primaryKey(),
+    key: text("key").unique().notNull(),
+    value: text("value").notNull(),
+    group: text("group").notNull(), // e.g., 'store', 'payment', 'shipping'
+    updatedAt: text("updated_at").default(sql`(datetime('now'))`).notNull(),
+});

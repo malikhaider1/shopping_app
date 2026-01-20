@@ -28,14 +28,14 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
         if (coupon) {
             setFormData({
                 code: coupon.code || '',
-                type: coupon.type || 'percentage',
-                value: coupon.value?.toString() || '',
-                minOrderAmount: coupon.minOrderAmount?.toString() || '',
-                maxDiscountAmount: coupon.maxDiscountAmount?.toString() || '',
+                type: coupon.discountType || 'percentage',
+                value: coupon.discountValue?.toString() || '',
+                minOrderAmount: coupon.minimumPurchase?.toString() || '',
+                maxDiscountAmount: coupon.maximumDiscount?.toString() || '',
                 usageLimit: coupon.usageLimit?.toString() || '',
-                userLimit: coupon.userLimit?.toString() || '1',
-                startDate: coupon.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : '',
-                expiryDate: coupon.expiryDate ? new Date(coupon.expiryDate).toISOString().split('T')[0] : '',
+                userLimit: coupon.userUsageLimit?.toString() || '1',
+                startDate: coupon.startsAt ? new Date(coupon.startsAt).toISOString().split('T')[0] : '',
+                expiryDate: coupon.endsAt ? new Date(coupon.endsAt).toISOString().split('T')[0] : '',
                 isActive: coupon.isActive ?? true,
             });
         } else {

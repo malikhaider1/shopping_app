@@ -12,6 +12,7 @@ import { AddProductModal } from '../components/admin/AddProductModal.tsx';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { motion } from 'framer-motion';
+import { Pagination } from '../components/admin/Pagination.tsx';
 
 export const ProductList = () => {
     const queryClient = useQueryClient();
@@ -182,33 +183,13 @@ export const ProductList = () => {
                     </table>
                 </div>
 
-                <div className="p-8 border-t border-divider flex items-center justify-between bg-surface/30">
-                    <p className="text-[10px] text-text-hint font-black uppercase tracking-[0.2em]">
-                        Index System v1.0 <span className="mx-2 opacity-20">|</span>
-                        Displaying {productsData?.meta.total > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, productsData?.meta.total || 0)} of {productsData?.meta.total || 0} nodes
-                    </p>
-                    <div className="flex items-center gap-3">
-                        <button
-                            disabled={page === 1}
-                            onClick={() => setPage(page - 1)}
-                            className="px-5 py-2.5 border border-divider rounded-xl text-[10px] font-black uppercase tracking-widest text-text-secondary bg-white hover:text-primary disabled:opacity-30 transition-all active:scale-95 shadow-sm"
-                        >
-                            Previous Node
-                        </button>
-                        <button
-                            className="px-5 py-2.5 rounded-xl bg-primary text-white text-[10px] font-black shadow-lg shadow-primary/20 tracking-widest"
-                        >
-                            {page}
-                        </button>
-                        <button
-                            disabled={page >= (productsData?.meta.totalPages || 1)}
-                            onClick={() => setPage(page + 1)}
-                            className="px-5 py-2.5 border border-divider rounded-xl text-[10px] font-black uppercase tracking-widest text-text-secondary bg-white hover:text-primary disabled:opacity-30 transition-all active:scale-95 shadow-sm"
-                        >
-                            Next Node
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={page}
+                    totalPages={productsData?.meta?.totalPages || 0}
+                    totalResults={productsData?.meta?.total || 0}
+                    limit={limit}
+                    onPageChange={setPage}
+                />
             </div>
         </motion.div>
     );

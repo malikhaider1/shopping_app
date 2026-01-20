@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { AddCategoryModal } from '../components/admin/AddCategoryModal.tsx';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Pagination } from '../components/admin/Pagination.tsx';
 import api from '../lib/api';
 import { motion } from 'framer-motion';
 
@@ -21,11 +22,15 @@ export const CategoryList = () => {
     const [expanded, setExpanded] = useState<string[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
+    const [page, setPage] = useState(1);
+    const limit = 10;
 
     const { data: categoriesData, isLoading } = useQuery({
-        queryKey: ['admin-categories'],
+        queryKey: ['admin-categories', page, searchTerm],
         queryFn: async () => {
-            const res = await api.get('/admin/categories');
+            const res = await api.get('/admin/categories', {
+                params: { page, limit, search: searchTerm }
+            });
             return res.data;
         }
     });
@@ -240,6 +245,14 @@ export const CategoryList = () => {
                         ))
                     )}
                 </div>
+
+                <Pagination
+                    currentPage={page}
+                    totalPages={categoriesData?.meta?.totalPages || 0}
+                    totalResults={categoriesData?.meta?.total || 0}
+                    limit={limit}
+                    onPageChange={setPage}
+                />
             </div>
         </motion.div>
     );

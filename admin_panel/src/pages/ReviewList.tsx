@@ -9,6 +9,7 @@ import {
     Loader2,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Pagination } from '../components/admin/Pagination.tsx';
 import api from '../lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -17,11 +18,13 @@ export const ReviewList = () => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [tab, setTab] = useState<'All' | 'Pending' | 'Approved'>('All');
+    const [page, setPage] = useState(1);
+    const limit = 10;
 
     const { data: reviewsData, isLoading } = useQuery({
-        queryKey: ['admin-reviews', tab],
+        queryKey: ['admin-reviews', tab, page, searchTerm],
         queryFn: async () => {
-            const params: any = {};
+            const params: any = { page, limit, search: searchTerm };
             if (tab === 'Pending') params.isApproved = false;
             if (tab === 'Approved') params.isApproved = true;
             const res = await api.get('/admin/reviews', { params });
@@ -77,7 +80,7 @@ export const ReviewList = () => {
         const term = searchTerm.toLowerCase();
         return review.user?.name?.toLowerCase().includes(term) ||
             review.product?.name?.toLowerCase().includes(term) ||
-            review.comment?.toLowerCase().includes(term);
+            review.content?.toLowerCase().includes(term);
     }) || [];
 
     return (
@@ -171,7 +174,7 @@ export const ReviewList = () => {
                                         <div className="relative">
                                             <MessageSquare className="absolute -left-10 -top-2 text-primary/10" size={32} />
                                             <p className="text-sm font-bold text-text-secondary leading-relaxed bg-surface/50 p-6 rounded-[1.5rem] border border-divider italic">
-                                                "{review.comment}"
+                                                "{review.content}"
                                             </p>
                                         </div>
 
@@ -220,6 +223,14 @@ export const ReviewList = () => {
                         </AnimatePresence>
                     )}
                 </div>
+
+                <Pagination
+                    currentPage={page}
+                    totalPages={reviewsData?.meta?.totalPages || 0}
+                    totalResults={reviewsData?.meta?.total || 0}
+                    limit={limit}
+                    onPageChange={setPage}
+                />
             </div>
         </motion.div>
     );

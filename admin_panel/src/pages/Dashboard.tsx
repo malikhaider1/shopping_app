@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import api from '../lib/api';
 
 const container = {
@@ -112,7 +113,7 @@ export const Dashboard = () => {
 
             {/* Stats Grid */}
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-                {stats.map((stat, index) => (
+                {stats.map((stat) => (
                     <motion.div
                         variants={item}
                         key={stat.label}
@@ -157,9 +158,9 @@ export const Dashboard = () => {
                             <h3 className="font-semibold text-neutral-900">Recent Orders</h3>
                             <p className="text-sm text-neutral-500">Latest customer transactions</p>
                         </div>
-                        <button className="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors">
+                        <Link to="/orders" className="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors">
                             View All
-                        </button>
+                        </Link>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full">
@@ -187,9 +188,9 @@ export const Dashboard = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${order.status === 'delivered' ? 'bg-emerald-50 text-emerald-700' :
-                                                    order.status === 'cancelled' ? 'bg-rose-50 text-rose-700' :
-                                                        order.status === 'shipped' ? 'bg-blue-50 text-blue-700' :
-                                                            'bg-amber-50 text-amber-700'
+                                                order.status === 'cancelled' ? 'bg-rose-50 text-rose-700' :
+                                                    order.status === 'shipped' ? 'bg-blue-50 text-blue-700' :
+                                                        'bg-amber-50 text-amber-700'
                                                 }`}>
                                                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                             </span>

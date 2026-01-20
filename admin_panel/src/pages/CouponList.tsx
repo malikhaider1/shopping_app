@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { AddCouponModal } from '../components/admin/AddCouponModal.tsx';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Pagination } from '../components/admin/Pagination.tsx';
 import api from '../lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -20,12 +21,14 @@ export const CouponList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedCoupon, setSelectedCoupon] = useState<any>(null);
+    const [page, setPage] = useState(1);
+    const limit = 9;
 
     const { data: couponsData, isLoading } = useQuery({
-        queryKey: ['admin-coupons', searchTerm],
+        queryKey: ['admin-coupons', page, searchTerm],
         queryFn: async () => {
             const res = await api.get('/admin/coupons', {
-                params: { search: searchTerm }
+                params: { page, limit, search: searchTerm }
             });
             return res.data;
         }
@@ -156,7 +159,7 @@ export const CouponList = () => {
                                                     <div className="flex flex-col">
                                                         <span className="text-[9px] font-black text-text-hint uppercase tracking-[0.2em] mb-1">Payload Benefit</span>
                                                         <span className="text-2xl font-black text-primary">
-                                                            {coupon.type === 'percentage' ? `${coupon.value}%` : `$${coupon.value}`} <span className="text-[10px] uppercase tracking-widest text-text-hint">OFF</span>
+                                                            {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `$${coupon.discountValue}`} <span className="text-[10px] uppercase tracking-widest text-text-hint">OFF</span>
                                                         </span>
                                                     </div>
                                                     <div className="text-right flex flex-col items-end">
@@ -178,7 +181,9 @@ export const CouponList = () => {
                                                         <Calendar size={14} className="text-text-hint" />
                                                         <div className="flex flex-col">
                                                             <span className="text-[9px] font-black text-text-hint uppercase tracking-[0.2em]">Expiration</span>
-                                                            <span className="text-[10px] font-black text-text-secondary uppercase tracking-tight">{format(new Date(coupon.expiryDate), 'MMM dd, yyyy')}</span>
+                                                            <span className="text-[10px] font-black text-text-secondary uppercase tracking-tight">
+                                                                {coupon.endsAt ? format(new Date(coupon.endsAt), 'MMM dd, yyyy') : 'Permanent'}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                     <div>
@@ -202,6 +207,14 @@ export const CouponList = () => {
                         </div>
                     )}
                 </div>
+
+                <Pagination
+                    currentPage={page}
+                    totalPages={couponsData?.meta?.totalPages || 0}
+                    totalResults={couponsData?.meta?.total || 0}
+                    limit={limit}
+                    onPageChange={setPage}
+                />
             </div>
         </motion.div>
     );

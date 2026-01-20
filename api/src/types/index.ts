@@ -77,7 +77,7 @@ export const productQuerySchema = z.object({
 });
 
 export const createProductSchema = z.object({
-    sku: z.string().min(1).max(50),
+    sku: z.string().min(1).max(50).optional(),
     name: z.string().min(1).max(200),
     slug: z.string().min(1).max(200),
     shortDescription: z.string().min(1).max(500),
