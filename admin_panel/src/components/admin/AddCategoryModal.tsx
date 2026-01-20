@@ -2,6 +2,7 @@ import { X, Loader2, Upload, ImageIcon, Link, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
+import { uploadImage } from '../../lib/imageUpload';
 
 interface AddCategoryModalProps {
     isOpen: boolean;
@@ -80,7 +81,9 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
         setFormData({ ...formData, name, slug: newSlug });
     };
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             // Validate file type
@@ -94,13 +97,24 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result as string;
-                setImagePreview(base64);
-                setFormData({ ...formData, imageUrl: base64 });
-            };
-            reader.readAsDataURL(file);
+            // Show preview immediately using local URL
+            const previewUrl = URL.createObjectURL(file);
+            setImagePreview(previewUrl);
+            setIsUploading(true);
+
+            try {
+                // Upload to R2 and get HTTP URL
+                const httpUrl = await uploadImage(file);
+                setFormData({ ...formData, imageUrl: httpUrl });
+                setImagePreview(httpUrl);
+            } catch (error: any) {
+                alert(`Failed to upload image: ${error.message}`);
+                setImagePreview(null);
+                setFormData({ ...formData, imageUrl: '' });
+            } finally {
+                setIsUploading(false);
+                URL.revokeObjectURL(previewUrl);
+            }
         }
     };
 
@@ -288,6 +302,14 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                                             alt="Category preview"
                                             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
+                                        {isUploading && (
+                                            <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                                                <div className="text-center text-white">
+                                                    <Loader2 size={32} className="mx-auto mb-2 animate-spin" />
+                                                    <p className="text-xs font-black uppercase tracking-tight">Uploading...</p>
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <div className="text-center text-white">
                                                 <ImageIcon size={32} className="mx-auto mb-2" />
@@ -304,13 +326,22 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                                     </div>
                                 ) : (
                                     <div className="p-10 flex flex-col items-center justify-center gap-4">
-                                        <div className="w-16 h-16 rounded-3xl bg-white group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all shadow-sm text-text-hint">
-                                            <Upload size={24} />
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-xs font-black text-text-primary uppercase tracking-tight">Click to upload image</p>
-                                            <p className="text-[10px] text-text-hint font-bold mt-1">PNG, JPG or WEBP (MAX. 5MB)</p>
-                                        </div>
+                                        {isUploading ? (
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Loader2 size={32} className="animate-spin text-primary" />
+                                                <p className="text-xs font-black text-text-primary uppercase tracking-tight">Uploading...</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="w-16 h-16 rounded-3xl bg-white group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all shadow-sm text-text-hint">
+                                                    <Upload size={24} />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-xs font-black text-text-primary uppercase tracking-tight">Click to upload image</p>
+                                                    <p className="text-[10px] text-text-hint font-bold mt-1">PNG, JPG or WEBP (MAX. 5MB)</p>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>

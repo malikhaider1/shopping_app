@@ -2,6 +2,7 @@ import { X, Loader2, Upload, Link, Trash2, ImageIcon } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
+import { uploadImage } from '../../lib/imageUpload';
 
 interface AddProductModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
     const [imageMode, setImageMode] = useState<'url' | 'file'>('file');
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
+    const [isUploading, setIsUploading] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -84,7 +86,7 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
         }
     };
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             if (!file.type.startsWith('image/')) {
@@ -96,13 +98,24 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result as string;
-                setImagePreview(base64);
-                setUploadedImageUrl(base64);
-            };
-            reader.readAsDataURL(file);
+            // Show preview immediately using local URL
+            const previewUrl = URL.createObjectURL(file);
+            setImagePreview(previewUrl);
+            setIsUploading(true);
+
+            try {
+                // Upload to R2 and get HTTP URL
+                const httpUrl = await uploadImage(file);
+                setUploadedImageUrl(httpUrl);
+                setImagePreview(httpUrl);
+            } catch (error: any) {
+                alert(`Failed to upload image: ${error.message}`);
+                setImagePreview(null);
+                setUploadedImageUrl('');
+            } finally {
+                setIsUploading(false);
+                URL.revokeObjectURL(previewUrl);
+            }
         }
     };
 
@@ -413,13 +426,22 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                                     </div>
                                 ) : (
                                     <div className="p-10 flex flex-col items-center justify-center gap-4">
-                                        <div className="w-16 h-16 rounded-3xl bg-white group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all shadow-sm text-text-hint">
-                                            <Upload size={24} />
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-xs font-black text-text-primary uppercase tracking-tight">Deploy visual interface</p>
-                                            <p className="text-[10px] text-text-hint font-bold mt-1">PNG, JPG or WEBP (MAX. 5MB)</p>
-                                        </div>
+                                        {isUploading ? (
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Loader2 size={32} className="animate-spin text-primary" />
+                                                <p className="text-xs font-black text-text-primary uppercase tracking-tight">Uploading...</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="w-16 h-16 rounded-3xl bg-white group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all shadow-sm text-text-hint">
+                                                    <Upload size={24} />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-xs font-black text-text-primary uppercase tracking-tight">Click to upload image</p>
+                                                    <p className="text-[10px] text-text-hint font-bold mt-1">PNG, JPG or WEBP (MAX. 5MB)</p>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>

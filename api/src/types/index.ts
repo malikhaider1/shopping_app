@@ -193,10 +193,7 @@ export const createCategorySchema = z.object({
     name: z.string().min(1).max(100),
     slug: z.string().min(1).max(100),
     description: z.string().max(500).optional(),
-    imageUrl: z.string().refine(
-        (val) => !val || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:'),
-        { message: 'Must be a valid URL or data URL' }
-    ).optional(),
+    imageUrl: z.string().url({ message: 'Must be a valid HTTP URL' }).optional(),
     displayOrder: z.number().int().min(0).default(0),
     isActive: z.boolean().default(true),
 });

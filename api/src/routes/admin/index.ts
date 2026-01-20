@@ -25,6 +25,7 @@ import banners from "./banners";
 import coupons from "./coupons";
 import reviews from "./reviews";
 import settings from "./settings";
+import upload from "./upload";
 
 const admin = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
@@ -266,5 +267,6 @@ admin.route("/banners", banners);
 admin.route("/coupons", coupons);
 admin.route("/reviews", reviews);
 admin.route("/settings", settings);
+admin.route("/upload", upload);
 
 export default admin;
