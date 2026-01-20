@@ -70,13 +70,19 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const payload = {
-            ...formData,
-            value: Number(formData.value),
-            minOrderAmount: Number(formData.minOrderAmount) || 0,
-            maxDiscountAmount: Number(formData.maxDiscountAmount) || null,
-            usageLimit: Number(formData.usageLimit) || null,
-            userLimit: Number(formData.userLimit) || 1,
+            // Map frontend fields to backend schema
             code: formData.code.toUpperCase(),
+            discountType: formData.type, // Schema uses discountType, frontend uses type
+            discountValue: Number(formData.value),
+            minimumPurchase: Number(formData.minOrderAmount) || 0, // Schema: minimumPurchase
+            maximumDiscount: Number(formData.maxDiscountAmount) || undefined, // Schema: maximumDiscount
+            usageLimit: Number(formData.usageLimit) || undefined, // Schema: usageLimit
+            userUsageLimit: Number(formData.userLimit) || 1, // Schema: userUsageLimit
+            startsAt: formData.startDate ? new Date(formData.startDate).toISOString() : new Date().toISOString(), // Schema: startsAt
+            endsAt: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : new Date().toISOString(), // Schema: endsAt
+            isActive: formData.isActive,
+            // Description is optional in schema, frontend doesn't have it explicitly in state but maybe we can omit or add empty
+            description: '',
         };
         mutation.mutate(payload);
     };

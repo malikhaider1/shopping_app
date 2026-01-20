@@ -215,7 +215,10 @@ products.delete("/:id", async (c) => {
 // POST /admin/products/:id/images - Add Product Image
 // ============================================================================
 const addImageSchema = z.object({
-    imageUrl: z.string().url(),
+    imageUrl: z.string().refine(
+        (val) => !val || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:'),
+        { message: 'Must be a valid URL or data URL' }
+    ),
     altText: z.string().optional(),
     isPrimary: z.boolean().default(false),
     displayOrder: z.number().int().min(0).default(0),

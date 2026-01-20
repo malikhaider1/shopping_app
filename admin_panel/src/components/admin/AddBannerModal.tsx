@@ -60,7 +60,20 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        mutation.mutate(formData);
+        // Explicit reconstruction to be safe and match strict schemas if needed
+        const cleanPayload = {
+            title: formData.title,
+            imageUrl: formData.imageUrl,
+            linkType: 'external', // Defaulting to external as per schema requirements
+            linkValue: formData.link,
+            displayOrder: Number(formData.displayOrder) || 0,
+            isActive: formData.isActive,
+            startsAt: formData.startDate ? new Date(formData.startDate).toISOString() : undefined,
+            endsAt: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
+            bannerType: 'promotional',
+        };
+
+        mutation.mutate(cleanPayload);
     };
 
     if (!isOpen) return null;

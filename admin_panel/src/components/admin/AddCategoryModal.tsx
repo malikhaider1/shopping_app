@@ -1,6 +1,6 @@
 import { X, Loader2, Upload, ImageIcon, Link, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 
 interface AddCategoryModalProps {
@@ -21,6 +21,7 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
         imageUrl: '',
         displayOrder: 0,
         parentId: null as string | null,
+        isActive: true,
     });
 
     useEffect(() => {
@@ -32,6 +33,7 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                 imageUrl: category.imageUrl || '',
                 displayOrder: category.displayOrder || 0,
                 parentId: category.parentId || null,
+                isActive: category.isActive ?? true,
             });
             // Set preview if editing existing category with image
             if (category.imageUrl) {
@@ -46,12 +48,40 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                 imageUrl: '',
                 displayOrder: 0,
                 parentId: null,
+                isActive: true,
             });
             setImagePreview(null);
         }
     }, [category, isOpen]);
 
+    // Fetch categories for parent selection
+    const { data: categoriesData } = useQuery({
+        queryKey: ['admin-categories-list'],
+        queryFn: async () => {
+            const res = await api.get('/admin/categories', { params: { limit: 100 } });
+            return res.data;
+        }
+    });
+
+    const parentOptions = categoriesData?.data?.filter((c: any) => c.id !== category?.id) || [];
+
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // ...
+        <div className="space-y-2">
+            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Parent Node</label>
+            <select
+                value={formData.parentId || ''}
+                onChange={(e) => setFormData({ ...formData, parentId: e.target.value || null })}
+                className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all appearance-none cursor-pointer"
+            >
+                <option value="">None (Root Node)</option>
+                {parentOptions.map((cat: any) => (
+                    <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                    </option>
+                ))}
+            </select>
+        </div>
         const file = e.target.files?.[0];
         if (file) {
             // Validate file type
@@ -110,19 +140,9 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
         // Sanitize data before sending
         const payload = {
             ...formData,
-            // Convert null parentId to undefined so it's stripped or accepted by Zod optional()
             parentId: formData.parentId || undefined,
-            // Ensure displayOrder is a number
             displayOrder: Number(formData.displayOrder) || 0,
-            // Ensure empty strings are undefined for optional fields if needed, 
-            // though Zod might accept empty strings depending on definition.
-            // Based on checking API schems:
-            // description: z.string().max(500).optional() -> Empty string is valid string, but undefined is better for "no description"
             description: formData.description || undefined,
-            // imageUrl: z.string()...optional() -> Empty string might fail .url() or .refine() if not handled.
-            // The schema has .refine((val) => !val || ...) so empty string is FALSY and passes !val. 
-            // EXCEPT if it was literally "", !"" is true. So it should pass. 
-            // But let's be safe and send undefined if empty.
             imageUrl: formData.imageUrl || undefined,
         };
 
@@ -145,6 +165,8 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+                    {/* ... (Name, Slug, Description inputs remain same) */}
+
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Classification Designation</label>
                         <input
@@ -195,12 +217,26 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                             <select
                                 value={formData.parentId || ''}
                                 onChange={(e) => setFormData({ ...formData, parentId: e.target.value || null })}
-                                className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all appearance-none"
+                                className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all appearance-none cursor-pointer"
                             >
                                 <option value="">None (Root Node)</option>
-                                {/* We could map existing categories here if needed */}
+                                {parentOptions.map((cat: any) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-divider">
+                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Active Status</label>
+                        <input
+                            type="checkbox"
+                            checked={formData.isActive}
+                            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                            className="w-5 h-5 accent-primary rounded focus:ring-0"
+                        />
                     </div>
 
                     <div className="space-y-2">

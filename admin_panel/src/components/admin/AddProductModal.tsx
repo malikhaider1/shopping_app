@@ -1,6 +1,6 @@
-import { X, Plus, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { X, Loader2, Upload, Link, Trash2, ImageIcon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 
 interface AddProductModalProps {
@@ -11,13 +11,22 @@ interface AddProductModalProps {
 
 export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalProps) => {
     const queryClient = useQueryClient();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [imageMode, setImageMode] = useState<'url' | 'file'>('file');
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
+
     const [formData, setFormData] = useState({
         name: '',
         sku: '',
+        slug: '',
+        brand: '',
         shortDescription: '',
         basePrice: 0,
         stockQuantity: 0,
         categoryId: 'cat-123', // Default or fetch categories
+        isFeatured: false,
+        isActive: true,
     });
 
     useEffect(() => {
@@ -25,39 +34,153 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
             setFormData({
                 name: product.name,
                 sku: product.sku,
+                slug: product.slug,
+                brand: product.brand || '',
                 shortDescription: product.shortDescription || '',
                 basePrice: product.basePrice,
                 stockQuantity: product.stockQuantity,
                 categoryId: product.categoryId,
+                isFeatured: product.isFeatured || false,
+                isActive: product.isActive ?? true,
             });
+
+            // Set preview if editing existing product with image
+            const img = product.mainImage || (product.images && product.images.length > 0 ? product.images[0].imageUrl : null);
+            if (img) {
+                setImagePreview(img);
+                setUploadedImageUrl(img);
+                setImageMode('url');
+            } else {
+                setImagePreview(null);
+                setUploadedImageUrl('');
+            }
         } else {
             setFormData({
                 name: '',
                 sku: '',
+                slug: '',
+                brand: '',
                 shortDescription: '',
                 basePrice: 0,
                 stockQuantity: 0,
                 categoryId: 'cat-123',
+                isFeatured: false,
+                isActive: true,
             });
+            setImagePreview(null);
+            setUploadedImageUrl('');
         }
     }, [product, isOpen]);
 
+    const handleImageClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleRemoveImage = () => {
+        setImagePreview(null);
+        setUploadedImageUrl('');
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size must be less than 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+                setImagePreview(base64);
+                setUploadedImageUrl(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const name = e.target.value;
+        // Only auto-generate slug if not in edit mode or if manually edited logic allows
+        // For simplicity, we'll auto-update slug only if it hasn't been manually modified, 
+        // but checking "manually modified" is complex. 
+        // Let's just update it if we are CREATING (no product prop) or provide a helper button to regenerate.
+        // Actually, standard behavior: auto-generate only if slug is empty or user is typing name for first time.
+        // We'll just set it equal to name-slugified if user hasn't touched the slug field? 
+        // Let's keep it simple: Auto-update slug when Name changes ONLY IF creating new product.
+
+        let newFormData = { ...formData, name };
+
+        if (!product) {
+            const slug = name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)+/g, '');
+            newFormData.slug = slug;
+        }
+
+        setFormData(newFormData);
+    };
+    const { data: categoriesData } = useQuery({
+        queryKey: ['admin-categories-list'],
+        queryFn: async () => {
+            const res = await api.get('/admin/categories', { params: { limit: 100 } });
+            return res.data;
+        }
+    });
+
     const mutation = useMutation({
         mutationFn: async (data: any) => {
+            let productId;
+
+            // 1. Create or Update Product
             if (product) {
-                return api.put(`/admin/products/${product.id}`, data);
+                productId = product.id;
+                await api.put(`/admin/products/${productId}`, data);
+            } else {
+                const res = await api.post('/admin/products', data);
+                productId = res.data.id;
             }
-            return api.post('/admin/products', data);
+
+            // 2. Add Image if available and changed
+            if (uploadedImageUrl && uploadedImageUrl !== (product?.mainImage)) {
+                await api.post(`/admin/products/${productId}/images`, {
+                    imageUrl: uploadedImageUrl,
+                    isPrimary: true,
+                    displayOrder: 0
+                });
+            }
+
+            return { id: productId };
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-products'] });
             onClose();
         },
+        onError: (error: any) => {
+            const message = error.response?.data?.error?.message || error.message || 'Failed to save product';
+            alert(`Error: ${message}`);
+        }
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        mutation.mutate(formData);
+
+        const payload = {
+            ...formData,
+            // Ensure numbers
+            basePrice: Number(formData.basePrice),
+            stockQuantity: Number(formData.stockQuantity),
+        };
+
+        mutation.mutate(payload);
     };
 
     if (!isOpen) return null;
@@ -82,12 +205,26 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                             <input
                                 type="text"
                                 value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                onChange={handleNameChange}
                                 required
                                 placeholder="e.g. Growth Oil"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
                         </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">URL Token (Slug)</label>
+                            <input
+                                type="text"
+                                value={formData.slug}
+                                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                required
+                                placeholder="growth-oil"
+                                className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all text-text-secondary"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Serial identifier (SKU)</label>
                             <input
@@ -99,6 +236,16 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
                         </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Brand Identity</label>
+                            <input
+                                type="text"
+                                value={formData.brand}
+                                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                placeholder="Brand Name"
+                                className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
+                            />
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -107,6 +254,7 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                             rows={3}
                             value={formData.shortDescription}
                             onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                            required
                             placeholder="Briefly describe your product specifications..."
                             className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all resize-none"
                         />
@@ -118,11 +266,14 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                             <select
                                 value={formData.categoryId}
                                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                                className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all appearance-none"
+                                className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all appearance-none cursor-pointer"
                             >
-                                <option value="cat-123">Beard Care</option>
-                                <option value="cat-456">Hair Care</option>
-                                <option value="cat-789">Face Care</option>
+                                <option value="">Select Classification</option>
+                                {categoriesData?.data?.map((cat: any) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <div className="space-y-2">
@@ -146,17 +297,125 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-divider">
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Featured Item</label>
+                            <input
+                                type="checkbox"
+                                checked={formData.isFeatured}
+                                onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                                className="w-5 h-5 accent-primary rounded focus:ring-0"
+                            />
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-divider">
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Active Status</label>
+                            <input
+                                type="checkbox"
+                                checked={formData.isActive}
+                                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                                className="w-5 h-5 accent-primary rounded focus:ring-0"
+                            />
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Visual Asset</label>
-                        <div className="border-2 border-dashed border-divider rounded-[2rem] p-10 flex flex-col items-center justify-center gap-4 hover:border-primary transition-all cursor-pointer group bg-surface/30">
-                            <div className="w-16 h-16 rounded-3xl bg-white group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all shadow-sm">
-                                <Plus />
-                            </div>
-                            <div className="text-center">
-                                <p className="text-xs font-black text-text-primary uppercase tracking-tight">Deploy visual interface</p>
-                                <p className="text-[10px] text-text-hint font-bold mt-1">PNG, JPG or WEBP (MAX. 800x400px)</p>
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Visual Asset</label>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setImageMode('file')}
+                                    className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all ${imageMode === 'file' ? 'bg-primary text-white' : 'bg-surface text-text-hint hover:text-primary'
+                                        }`}
+                                >
+                                    <Upload size={12} className="inline mr-1" />
+                                    Upload
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setImageMode('url')}
+                                    className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all ${imageMode === 'url' ? 'bg-primary text-white' : 'bg-surface text-text-hint hover:text-primary'
+                                        }`}
+                                >
+                                    <Link size={12} className="inline mr-1" />
+                                    URL
+                                </button>
                             </div>
                         </div>
+
+                        {/* Hidden file input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                            className="hidden"
+                        />
+
+                        {imageMode === 'file' ? (
+                            <div
+                                onClick={handleImageClick}
+                                className="relative border-2 border-dashed border-divider rounded-[2rem] overflow-hidden hover:border-primary transition-all cursor-pointer group bg-surface/30"
+                            >
+                                {imagePreview ? (
+                                    <div className="relative">
+                                        <img
+                                            src={imagePreview}
+                                            alt="Product preview"
+                                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <div className="text-center text-white">
+                                                <ImageIcon size={32} className="mx-auto mb-2" />
+                                                <p className="text-xs font-black uppercase tracking-tight">Click to change</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); handleRemoveImage(); }}
+                                            className="absolute top-3 right-3 p-2 bg-rose-500 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600 shadow-lg"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="p-10 flex flex-col items-center justify-center gap-4">
+                                        <div className="w-16 h-16 rounded-3xl bg-white group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all shadow-sm text-text-hint">
+                                            <Upload size={24} />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-xs font-black text-text-primary uppercase tracking-tight">Deploy visual interface</p>
+                                            <p className="text-[10px] text-text-hint font-bold mt-1">PNG, JPG or WEBP (MAX. 5MB)</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <input
+                                    type="text"
+                                    value={uploadedImageUrl}
+                                    onChange={(e) => {
+                                        setUploadedImageUrl(e.target.value);
+                                        setImagePreview(e.target.value);
+                                    }}
+                                    placeholder="https://example.com/image.jpg"
+                                    className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
+                                />
+                                {imagePreview && uploadedImageUrl && (
+                                    <div className="relative rounded-2xl overflow-hidden border border-divider">
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview"
+                                            className="w-full h-32 object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </form>
 

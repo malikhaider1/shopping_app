@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import {
     Search,
-    UserPlus,
-    MoreVertical,
     Mail,
     Phone,
     ShieldCheck,
@@ -59,10 +57,10 @@ export const UserList = () => {
                     <h2 className="text-3xl font-black tracking-tight text-text-primary uppercase tracking-tighter">Identity Core</h2>
                     <p className="text-text-secondary font-medium">Manage user authentication nodes and behavioral permissions.</p>
                 </div>
-                <button className="bg-primary text-white px-8 py-3 rounded-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-xl shadow-primary/10 active:scale-95">
+                {/* <button className="bg-primary text-white px-8 py-3 rounded-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-xl shadow-primary/10 active:scale-95">
                     <UserPlus size={20} />
                     Deploy User Node
-                </button>
+                </button> */}
             </div>
 
             <div className="bg-white border border-divider rounded-[2.5rem] overflow-hidden shadow-sm">
@@ -162,9 +160,9 @@ export const UserList = () => {
                                                 >
                                                     {user.isActive ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}
                                                 </button>
-                                                <button className="p-2.5 text-text-hint hover:text-primary transition-all bg-white border border-divider rounded-xl shadow-sm hover:shadow-md active:scale-90">
+                                                {/* <button className="p-2.5 text-text-hint hover:text-primary transition-all bg-white border border-divider rounded-xl shadow-sm hover:shadow-md active:scale-90">
                                                     <MoreVertical size={18} />
-                                                </button>
+                                                </button> */}
                                             </div>
                                         </td>
                                     </tr>

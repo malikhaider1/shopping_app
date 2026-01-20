@@ -24,6 +24,7 @@ const statusConfig: Record<string, { label: string, color: string, icon: any }> 
 export const OrderDetailsModal = ({ isOpen, onClose, orderId }: OrderDetailsModalProps) => {
     const queryClient = useQueryClient();
     const [statusNotes, setStatusNotes] = useState('');
+    const [trackingNumber, setTrackingNumber] = useState('');
 
     const { data: orderResponse, isLoading } = useQuery({
         queryKey: ['admin-order', orderId],
@@ -39,13 +40,15 @@ export const OrderDetailsModal = ({ isOpen, onClose, orderId }: OrderDetailsModa
         mutationFn: async (newStatus: string) => {
             return api.put(`/admin/orders/${orderId}/status`, {
                 status: newStatus,
-                notes: statusNotes
+                notes: statusNotes,
+                trackingNumber: trackingNumber || undefined
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
             queryClient.invalidateQueries({ queryKey: ['admin-order', orderId] });
             setStatusNotes('');
+            setTrackingNumber(''); // Keep or clear? Clearing is safer.
         },
     });
 
@@ -57,6 +60,7 @@ export const OrderDetailsModal = ({ isOpen, onClose, orderId }: OrderDetailsModa
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm" onClick={onClose} />
             <div className="relative w-full max-w-3xl bg-white rounded-[2.5rem] shadow-2xl border border-divider overflow-hidden animate-in fade-in zoom-in duration-200">
+                {/* ... Header and Content ... */}
                 <div className="flex items-center justify-between p-8 border-b border-divider bg-surface/30">
                     <div>
                         <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">
@@ -79,6 +83,7 @@ export const OrderDetailsModal = ({ isOpen, onClose, orderId }: OrderDetailsModa
                         </div>
                     ) : order ? (
                         <>
+                            {/* ... Customer, Shipping, Financials ... */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-6">
                                     <div className="p-6 bg-surface rounded-[2rem] border border-divider shadow-sm">
@@ -122,6 +127,14 @@ export const OrderDetailsModal = ({ isOpen, onClose, orderId }: OrderDetailsModa
                                                     {order.paymentMethod}
                                                 </span>
                                             </div>
+                                            {order.trackingNumber && (
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-text-hint">Tracking Ref</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary">
+                                                        {order.trackingNumber}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -145,6 +158,7 @@ export const OrderDetailsModal = ({ isOpen, onClose, orderId }: OrderDetailsModa
                                 </div>
                             </div>
 
+                            {/* ... Composition Manifest ... */}
                             <div className="space-y-4">
                                 <h4 className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Composition Manifest</h4>
                                 <div className="border border-divider rounded-[2rem] overflow-hidden bg-white">
@@ -177,7 +191,7 @@ export const OrderDetailsModal = ({ isOpen, onClose, orderId }: OrderDetailsModa
                             <div className="p-8 bg-surface rounded-[2rem] border border-divider shadow-sm space-y-6">
                                 <h4 className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Operational Override</h4>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    {['confirmed', 'processing', 'shipped', 'delivered', 'cancelled'].map((st) => (
+                                    {['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'returned'].map((st) => (
                                         <button
                                             key={st}
                                             disabled={statusMutation.isPending || order.status === st}
@@ -195,14 +209,26 @@ export const OrderDetailsModal = ({ isOpen, onClose, orderId }: OrderDetailsModa
                                         </button>
                                     ))}
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black text-text-hint uppercase tracking-widest ml-1">Status Annotation (Notes)</label>
-                                    <textarea
-                                        value={statusNotes}
-                                        onChange={(e) => setStatusNotes(e.target.value)}
-                                        placeholder="Add operational notes for this status transition..."
-                                        className="w-full px-5 py-4 bg-white rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-xs transition-all resize-none h-24"
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-text-hint uppercase tracking-widest ml-1">Status Annotation (Notes)</label>
+                                        <textarea
+                                            value={statusNotes}
+                                            onChange={(e) => setStatusNotes(e.target.value)}
+                                            placeholder="Add operational notes..."
+                                            className="w-full px-5 py-4 bg-white rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-xs transition-all resize-none h-24"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-text-hint uppercase tracking-widest ml-1">Logistics Reference (Tracking #)</label>
+                                        <input
+                                            type="text"
+                                            value={trackingNumber}
+                                            onChange={(e) => setTrackingNumber(e.target.value)}
+                                            placeholder="E.g. TRK-9988776655"
+                                            className="w-full px-5 py-4 bg-white rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-xs transition-all h-24"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </>
