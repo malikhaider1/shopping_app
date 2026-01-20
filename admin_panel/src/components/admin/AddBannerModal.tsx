@@ -88,7 +88,7 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
             <div className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl border border-divider overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between p-8 border-b border-divider">
                     <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">
-                        {banner ? 'Edit Visual Asset' : 'New Promotional Node'}
+                        {banner ? 'Edit Banner' : 'Add New Banner'}
                     </h3>
                     <button onClick={onClose} className="p-2 text-text-hint hover:text-primary transition-colors">
                         <X size={24} />
@@ -97,43 +97,43 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
 
                 <form id="banner-form" onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Promotional Headline</label>
+                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Banner Title *</label>
                         <input
                             type="text"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             required
-                            placeholder="e.g. Winter Collection 2026"
+                            placeholder="e.g. Summer Sale - 50% Off"
                             className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Visual Asset URL (21:9 Aspect Ratio)</label>
+                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Image URL * <span className="text-text-secondary">(recommended 21:9)</span></label>
                         <input
                             type="text"
                             value={formData.imageUrl}
                             onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                             required
-                            placeholder="https://images.unsplash.com/..."
+                            placeholder="https://images.example.com/banner.jpg"
                             className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Destination URI (Link)</label>
+                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Link <span className="text-text-secondary">(optional)</span></label>
                         <input
                             type="text"
                             value={formData.link}
                             onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                            placeholder="/collections/winter"
+                            placeholder="/collections/summer or https://..."
                             className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Activation Date</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Start Date</label>
                             <input
                                 type="date"
                                 value={formData.startDate}
@@ -142,7 +142,7 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Deactivation Date</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">End Date</label>
                             <input
                                 type="date"
                                 value={formData.endDate}
@@ -154,16 +154,18 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
 
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Stack Priority</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Display Order</label>
                             <input
                                 type="number"
                                 value={formData.displayOrder}
-                                onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) })}
+                                onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })}
+                                placeholder="0"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
+                            <p className="text-[9px] text-text-hint ml-1">Lower numbers appear first</p>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Operational State</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Status</label>
                             <div className="flex items-center gap-4 py-4">
                                 <button
                                     type="button"
@@ -173,7 +175,7 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
                                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${formData.isActive ? 'left-7' : 'left-1'}`} />
                                 </button>
                                 <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary">
-                                    {formData.isActive ? 'Enabled' : 'Disabled'}
+                                    {formData.isActive ? 'Active' : 'Hidden'}
                                 </span>
                             </div>
                         </div>
@@ -194,7 +196,7 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
                         disabled={mutation.isPending}
                         className="px-10 py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-xl shadow-primary/20 active:scale-95 flex items-center gap-3 disabled:opacity-50"
                     >
-                        {mutation.isPending ? <Loader2 className="animate-spin" size={16} /> : banner ? 'Update System Node' : 'Initialize Promo Node'}
+                        {mutation.isPending ? <Loader2 className="animate-spin" size={16} /> : banner ? 'Save Changes' : 'Create Banner'}
                     </button>
                 </div>
             </div>

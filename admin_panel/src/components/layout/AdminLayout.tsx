@@ -1,42 +1,56 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, Command } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminLayout = () => {
     const location = useLocation();
 
     return (
-        <div className="flex min-h-screen bg-background">
+        <div className="flex min-h-screen bg-neutral-50">
             <Sidebar />
-            <div className="ml-64 flex-1 flex flex-col">
-                <header className="h-16 border-b border-divider bg-white/80 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-8">
-                    <div className="relative w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-hint" size={18} />
+            <div className="ml-72 flex-1 flex flex-col">
+                {/* Enhanced Header */}
+                <header className="h-16 bg-white border-b border-neutral-100 sticky top-0 z-10 flex items-center justify-between px-8 shadow-sm">
+                    {/* Search Bar */}
+                    <div className="relative w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" size={16} />
                         <input
                             type="text"
-                            placeholder="Search something..."
-                            className="w-full pl-10 pr-4 py-2 bg-surface/50 rounded-full border border-transparent focus:border-primary/20 focus:ring-4 focus:ring-primary/5 text-sm transition-all"
+                            placeholder="Search anything..."
+                            className="w-full pl-11 pr-4 py-2.5 bg-neutral-50 rounded-xl text-sm border border-transparent hover:border-neutral-200 focus:border-neutral-300 focus:bg-white transition-all placeholder:text-neutral-400"
                         />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-neutral-300">
+                            <Command size={12} />
+                            <span className="text-[10px] font-medium">K</span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <button className="p-2 text-text-secondary hover:text-primary transition-all hover:bg-surface rounded-full relative active:scale-95">
-                            <Bell size={20} />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-white animate-pulse"></span>
+
+                    {/* Right Section */}
+                    <div className="flex items-center gap-3">
+                        {/* Notifications */}
+                        <button className="relative p-2.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-xl transition-all active:scale-95">
+                            <Bell size={18} />
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white animate-pulse" />
                         </button>
-                        <div className="h-8 w-px bg-divider mx-2"></div>
-                        <div className="flex items-center gap-3">
-                            <div className="text-right flex flex-col">
-                                <span className="text-xs font-bold text-text-primary leading-tight">Admin Portal</span>
-                                <span className="text-[10px] text-text-hint uppercase tracking-wider font-bold">Standard Access</span>
+
+                        <div className="h-6 w-px bg-neutral-200" />
+
+                        {/* User Badge */}
+                        <div className="flex items-center gap-3 pl-2">
+                            <div className="text-right">
+                                <p className="text-xs font-semibold text-neutral-900">Admin Panel</p>
+                                <p className="text-[10px] text-neutral-500 font-medium">Full Access</p>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-black">
+                            <div className="w-9 h-9 rounded-xl bg-neutral-900 flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-neutral-900/20">
                                 AD
                             </div>
                         </div>
                     </div>
                 </header>
-                <main className="p-8 flex-1 overflow-x-hidden">
+
+                {/* Main Content */}
+                <main className="p-8 flex-1 overflow-x-hidden bg-neutral-50">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={location.pathname}

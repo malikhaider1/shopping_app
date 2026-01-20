@@ -65,6 +65,21 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
 
     const parentOptions = categoriesData?.data?.filter((c: any) => c.id !== category?.id) || [];
 
+    // Auto-generate slug from name
+    const generateSlug = (name: string) => {
+        return name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+    };
+
+    const handleNameChange = (name: string) => {
+        const newSlug = !category ? generateSlug(name) : formData.slug;
+        setFormData({ ...formData, name, slug: newSlug });
+    };
+
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -141,7 +156,7 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
             <div className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl border border-divider overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between p-8 border-b border-divider">
                     <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">
-                        {category ? 'Edit Classification' : 'New Classification Node'}
+                        {category ? 'Edit Category' : 'Add New Category'}
                     </h3>
                     <button onClick={onClose} className="p-2 text-text-hint hover:text-primary transition-colors">
                         <X size={24} />
@@ -149,61 +164,62 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                 </div>
 
                 <form id="category-form" onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
-                    {/* ... (Name, Slug, Description inputs remain same) */}
-
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Classification Designation</label>
+                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Category Name *</label>
                         <input
                             type="text"
                             value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            onChange={(e) => handleNameChange(e.target.value)}
                             required
-                            placeholder="e.g. Beard Care"
+                            placeholder="e.g. Hair Care, Skincare, Electronics"
                             className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">URL Semantic Slug</label>
+                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">URL Slug <span className="text-text-secondary">(auto-generated)</span></label>
                         <input
                             type="text"
                             value={formData.slug}
                             onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                             required
-                            placeholder="beard-care"
-                            className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
+                            placeholder="e.g. hair-care"
+                            className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all text-text-secondary"
                         />
+                        <p className="text-[9px] text-text-hint ml-1">Used in URLs: yourstore.com/category/<span className="text-primary">{formData.slug || 'slug'}</span></p>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Specifications (Description)</label>
+                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Description <span className="text-text-secondary">(optional)</span></label>
                         <textarea
                             rows={3}
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            placeholder="Describe the classification scope..."
+                            placeholder="Briefly describe what products belong in this category..."
                             className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all resize-none"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Index Priority (Order)</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Display Order</label>
                             <input
                                 type="number"
                                 value={formData.displayOrder}
-                                onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) })}
+                                onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })}
+                                placeholder="0"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
+                            <p className="text-[9px] text-text-hint ml-1">Lower numbers appear first</p>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Parent Node</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Parent Category</label>
                             <select
                                 value={formData.parentId || ''}
                                 onChange={(e) => setFormData({ ...formData, parentId: e.target.value || null })}
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all appearance-none cursor-pointer"
                             >
-                                <option value="">None (Root Node)</option>
+                                <option value="">None (Top Level)</option>
                                 {parentOptions.map((cat: any) => (
                                     <option key={cat.id} value={cat.id}>
                                         {cat.name}
@@ -214,7 +230,10 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                     </div>
 
                     <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-divider">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Active Status</label>
+                        <div>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Status</label>
+                            <p className="text-[9px] text-text-hint mt-0.5">{formData.isActive ? 'Visible to customers' : 'Hidden from store'}</p>
+                        </div>
                         <input
                             type="checkbox"
                             checked={formData.isActive}

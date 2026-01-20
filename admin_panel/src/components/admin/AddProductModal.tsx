@@ -212,7 +212,7 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
             <div className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl border border-divider overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between p-8 border-b border-divider">
                     <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">
-                        {product ? 'Edit Entity' : 'New Catalog Entry'}
+                        {product ? 'Edit Product' : 'Add New Product'}
                     </h3>
                     <button onClick={onClose} className="p-2 text-text-hint hover:text-primary transition-colors">
                         <X size={24} />
@@ -222,24 +222,24 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                 <form id="product-form" onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Product Designation</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Product Name *</label>
                             <input
                                 type="text"
                                 value={formData.name}
                                 onChange={handleNameChange}
                                 required
-                                placeholder="e.g. Growth Oil"
+                                placeholder="e.g. Beard Growth Oil"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">URL Token (Slug)</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">URL Slug <span className="text-text-secondary">(auto)</span></label>
                             <input
                                 type="text"
                                 value={formData.slug}
                                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                                 required
-                                placeholder="growth-oil"
+                                placeholder="e.g. beard-growth-oil"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all text-text-secondary"
                             />
                         </div>
@@ -247,50 +247,50 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
 
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Serial identifier (SKU)</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">SKU (Unique Code) *</label>
                             <input
                                 type="text"
                                 value={formData.sku}
                                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                                 required
-                                placeholder="DM-GRO-01"
+                                placeholder="e.g. PROD-001"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Brand Identity</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Brand <span className="text-text-secondary">(optional)</span></label>
                             <input
                                 type="text"
                                 value={formData.brand}
                                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                                placeholder="Brand Name"
+                                placeholder="e.g. Your Brand Name"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Inventory Abstract (Short Description) <span className="text-text-secondary">({formData.shortDescription.length}/500)</span></label>
+                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Short Description * <span className="text-text-secondary">({formData.shortDescription.length}/500)</span></label>
                         <textarea
                             rows={3}
                             value={formData.shortDescription}
                             onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
                             required
                             maxLength={500}
-                            placeholder="Briefly describe your product specifications..."
+                            placeholder="Briefly describe your product - this appears in search results and product cards..."
                             className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all resize-none"
                         />
                     </div>
 
                     <div className="grid grid-cols-3 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Classification</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Category</label>
                             <select
                                 value={formData.categoryId}
                                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all appearance-none cursor-pointer"
                             >
-                                <option value="">Select Classification</option>
+                                <option value="">Select Category</option>
                                 {categoriesData?.data?.map((cat: any) => (
                                     <option key={cat.id} value={cat.id}>
                                         {cat.name}
@@ -299,21 +299,26 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Base Valuation ($)</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Price ($) *</label>
                             <input
                                 type="number"
                                 value={formData.basePrice}
-                                onChange={(e) => setFormData({ ...formData, basePrice: parseFloat(e.target.value) })}
+                                onChange={(e) => setFormData({ ...formData, basePrice: parseFloat(e.target.value) || 0 })}
                                 step="0.01"
+                                min="0.01"
+                                required
+                                placeholder="29.99"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Quantum (Stock)</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Stock Quantity</label>
                             <input
                                 type="number"
                                 value={formData.stockQuantity}
-                                onChange={(e) => setFormData({ ...formData, stockQuantity: parseInt(e.target.value) })}
+                                onChange={(e) => setFormData({ ...formData, stockQuantity: parseInt(e.target.value) || 0 })}
+                                min="0"
+                                placeholder="100"
                                 className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
                             />
                         </div>
@@ -321,7 +326,10 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
 
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-divider">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Featured Item</label>
+                            <div>
+                                <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Featured Product</label>
+                                <p className="text-[9px] text-text-hint mt-0.5">Show on homepage</p>
+                            </div>
                             <input
                                 type="checkbox"
                                 checked={formData.isFeatured}
@@ -330,7 +338,10 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                             />
                         </div>
                         <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-divider">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Active Status</label>
+                            <div>
+                                <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em]">Status</label>
+                                <p className="text-[9px] text-text-hint mt-0.5">{formData.isActive ? 'Visible in store' : 'Hidden'}</p>
+                            </div>
                             <input
                                 type="checkbox"
                                 checked={formData.isActive}
@@ -342,7 +353,7 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
 
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Visual Asset</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Product Image</label>
                             <div className="flex items-center gap-1">
                                 <button
                                     type="button"

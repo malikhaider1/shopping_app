@@ -3,13 +3,116 @@
 @tailwind utilities;
 
 :root {
-  background-color: #FFFFFF;
-  color: #1A1A1A;
+  --primary-gradient: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
+  --sidebar-gradient: linear-gradient(180deg, #171717 0%, #262626 100%);
 }
 
 body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  @apply bg-background text-text-primary;
+  @apply bg-background text-text-primary antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-400;
+}
+
+/* Hide Scrollbar Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Glass Effect */
+.glass {
+  @apply bg-white/80 backdrop-blur-xl border border-white/20;
+}
+
+.glass-dark {
+  @apply bg-black/40 backdrop-blur-xl border border-white/10;
+}
+
+/* Card Hover Effects */
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1;
+}
+
+/* Input Focus Ring */
+input:focus,
+select:focus,
+textarea:focus {
+  @apply outline-none ring-2 ring-neutral-200 border-neutral-300;
+}
+
+button:focus-visible {
+  @apply outline-none ring-2 ring-neutral-300;
+}
+
+/* Stats Card Gradient Backgrounds */
+.stat-gradient-blue {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+}
+
+.stat-gradient-emerald {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.stat-gradient-violet {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+}
+
+.stat-gradient-amber {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+}
+
+.stat-gradient-rose {
+  background: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
+}
+
+.stat-gradient-dark {
+  background: linear-gradient(135deg, #1A1A1A 0%, #404040 100%);
+}
+
+/* Pulse animation for notifications */
+.pulse-dot {
+  @apply relative;
+}
+
+.pulse-dot::after {
+  content: '';
+  @apply absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-error rounded-full;
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-ring {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
 }

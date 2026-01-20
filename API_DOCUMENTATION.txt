@@ -1304,7 +1304,18 @@ GET    /admin/categories              - List all categories
 GET    /admin/categories/:id          - Get category details
 POST   /admin/categories              - Create category
 PUT    /admin/categories/:id          - Update category
-DELETE /admin/categories/:id          - Delete category (soft delete)
+DELETE /admin/categories/:id          - Delete category (HARD DELETE - permanent)
+       NOTE: Cannot delete categories with products. Remove products first.
+PATCH  /admin/categories/:id/toggle-status  - Suspend/Activate category
+
+Response for toggle-status (200 OK):
+{
+  "success": true,
+  "data": {
+    "message": "Category activated" | "Category suspended",
+    "isActive": true | false
+  }
+}
 
 --------------------------------------------------------------------------------
 10.5 Order Management

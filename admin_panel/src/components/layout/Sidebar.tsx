@@ -9,10 +9,14 @@ import {
     Star,
     Bell,
     Settings,
-    Users
+    Users,
+    LogOut,
+    Zap
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -31,10 +35,6 @@ const navItems = [
     { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { LogOut } from 'lucide-react';
-
 export const Sidebar = () => {
     const { logout, user } = useAuth();
     const navigate = useNavigate();
@@ -45,45 +45,69 @@ export const Sidebar = () => {
     };
 
     return (
-        <div className="w-64 h-screen bg-surface border-r border-divider flex flex-col fixed left-0 top-0 z-50">
-            <div className="p-8 border-b border-divider flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xs shadow-lg shadow-primary/20">S</div>
-                <h1 className="text-lg font-black tracking-tighter text-text-primary">ADMIN <span className="text-primary">CORE</span></h1>
+        <div className="w-72 h-screen bg-gradient-to-b from-neutral-900 via-neutral-900 to-neutral-800 flex flex-col fixed left-0 top-0 z-50 shadow-2xl">
+            {/* Logo Section */}
+            <div className="p-6 flex items-center gap-4 border-b border-white/5">
+                <div className="relative">
+                    <div className="w-11 h-11 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-white/10">
+                        <Zap className="w-5 h-5 text-neutral-900" strokeWidth={2.5} />
+                    </div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-neutral-900 animate-pulse" />
+                </div>
+                <div>
+                    <h1 className="text-lg font-black text-white tracking-tight">ShopAdmin</h1>
+                    <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-widest">Command Center</p>
+                </div>
             </div>
-            <nav className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-hide">
+
+            {/* Navigation */}
+            <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-1 scrollbar-hide">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) => cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group",
+                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative",
                             isActive
-                                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
-                                : "text-text-hint hover:bg-divider/50 hover:text-primary hover:px-5"
+                                ? "bg-white text-neutral-900 shadow-lg shadow-white/10 font-bold"
+                                : "text-neutral-400 hover:text-white hover:bg-white/5"
                         )}
                     >
-                        <item.icon size={18} className={cn("transition-transform group-hover:scale-110", item.path === '/' ? "" : "")} />
-                        <span className="font-black text-[10px] uppercase tracking-[0.15em]">{item.label}</span>
+                        {({ isActive }) => (
+                            <>
+                                <item.icon size={18} className={cn(
+                                    "transition-all duration-300",
+                                    isActive ? "drop-shadow-sm" : "group-hover:scale-110"
+                                )} />
+                                <span className="text-xs uppercase tracking-wide font-semibold">{item.label}</span>
+                                {isActive && (
+                                    <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-neutral-900 shadow-sm" />
+                                )}
+                            </>
+                        )}
                     </NavLink>
                 ))}
             </nav>
-            <div className="p-6 border-t border-divider bg-surface/50 backdrop-blur-sm">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 px-2">
-                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-black ring-4 ring-primary/10">
-                            {user?.name?.charAt(0) || 'AD'}
+
+            {/* User Section */}
+            <div className="p-4 border-t border-white/5">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all group">
+                    <div className="relative">
+                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-neutral-900 text-sm font-black shadow-lg">
+                            {user?.name?.charAt(0)?.toUpperCase() || 'A'}
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-xs font-black text-text-primary uppercase tracking-tight">{user?.name || 'Admin Master'}</span>
-                            <span className="text-[10px] font-bold text-text-hint truncate w-24">{user?.email || 'master@admin.com'}</span>
-                        </div>
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-neutral-900" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-white truncate">{user?.name || 'Admin User'}</p>
+                        <p className="text-[10px] text-neutral-500 truncate">{user?.email || 'admin@example.com'}</p>
                     </div>
                     <button
                         onClick={handleLogout}
-                        className="p-2 text-text-hint hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all active:scale-95"
+                        className="p-2 text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         title="Sign Out"
                     >
-                        <LogOut size={18} />
+                        <LogOut size={16} />
                     </button>
                 </div>
             </div>

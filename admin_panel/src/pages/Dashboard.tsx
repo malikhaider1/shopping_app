@@ -5,7 +5,8 @@ import {
     Package,
     ArrowUpRight,
     ArrowDownRight,
-    Activity
+    Activity,
+    MoreHorizontal
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
@@ -55,34 +56,38 @@ export const Dashboard = () => {
         {
             label: 'Total Revenue',
             value: statsData ? `$${statsData.totalRevenue.toLocaleString()}` : '$0',
-            change: '+12.5%', // Mocked for now as backend doesn't provide historical comparison yet
+            change: '+12.5%',
             trend: 'up',
             icon: TrendingUp,
-            color: 'text-blue-600 bg-blue-50'
+            gradient: 'from-emerald-500 to-emerald-600',
+            bgLight: 'bg-emerald-50'
         },
         {
-            label: 'Total Customers',
+            label: 'Customers',
             value: statsData ? statsData.totalUsers.toLocaleString() : '0',
             change: '+5.2%',
             trend: 'up',
             icon: Users,
-            color: 'text-indigo-600 bg-indigo-50'
+            gradient: 'from-blue-500 to-blue-600',
+            bgLight: 'bg-blue-50'
         },
         {
-            label: 'Orders Placed',
+            label: 'Orders',
             value: statsData ? statsData.totalOrders.toLocaleString() : '0',
-            change: statsData ? `${statsData.ordersByStatus.placed || 0} pending` : '0 pending',
+            change: statsData ? `${statsData.ordersByStatus?.placed || 0} pending` : '0 pending',
             trend: 'up',
             icon: ShoppingCart,
-            color: 'text-emerald-600 bg-emerald-50'
+            gradient: 'from-violet-500 to-violet-600',
+            bgLight: 'bg-violet-50'
         },
         {
-            label: 'In Stock',
+            label: 'Products',
             value: statsData ? statsData.totalProducts.toLocaleString() : '0',
-            change: statsData ? `${statsData.lowStockProducts} low stock` : '0 low stock',
-            trend: 'down',
+            change: statsData ? `${statsData.lowStockProducts || 0} low stock` : '0 low stock',
+            trend: statsData?.lowStockProducts > 0 ? 'down' : 'up',
             icon: Package,
-            color: 'text-amber-600 bg-amber-50'
+            gradient: 'from-amber-500 to-amber-600',
+            bgLight: 'bg-amber-50'
         },
     ];
 
@@ -93,90 +98,105 @@ export const Dashboard = () => {
             animate="show"
             className="space-y-8"
         >
+            {/* Header */}
             <motion.div variants={item} className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-text-primary">Dashboard Overview</h2>
-                    <p className="text-text-secondary">Real-time performance metrics and business health.</p>
+                    <h2 className="text-2xl font-bold text-neutral-900">Dashboard</h2>
+                    <p className="text-neutral-500 text-sm">Welcome back! Here's what's happening today.</p>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-xs font-black uppercase tracking-widest ring-1 ring-emerald-100 italic">
+                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-semibold ring-1 ring-emerald-100">
                     <Activity size={14} className="animate-pulse" />
-                    Live System Feed
+                    Live
                 </div>
             </motion.div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {stats.map((stat) => (
+            {/* Stats Grid */}
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                {stats.map((stat, index) => (
                     <motion.div
                         variants={item}
                         key={stat.label}
-                        className="p-8 bg-white border border-divider rounded-3xl hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden"
+                        className="relative p-6 bg-white rounded-2xl border border-neutral-100 hover:border-neutral-200 hover:shadow-lg transition-all duration-300 group overflow-hidden"
                     >
-                        <div className="flex items-center justify-between mb-6">
-                            <span className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] group-hover:text-primary transition-colors">{stat.label}</span>
-                            <div className={`p-4 rounded-2xl ${stat.color} ring-1 ring-divider ring-inset transition-all group-hover:scale-110`}>
-                                <stat.icon size={22} />
+                        {/* Gradient accent line */}
+                        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity`} />
+
+                        <div className="flex items-start justify-between mb-4">
+                            <div className={`p-3 rounded-xl ${stat.bgLight} group-hover:scale-110 transition-transform`}>
+                                <stat.icon size={20} className={`text-neutral-700`} />
                             </div>
+                            <button className="p-1 text-neutral-400 hover:text-neutral-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <MoreHorizontal size={16} />
+                            </button>
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <span className="text-3xl font-black text-text-primary">{stat.value}</span>
-                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider mt-2">
+
+                        <div>
+                            <p className="text-sm text-neutral-500 font-medium mb-1">{stat.label}</p>
+                            <p className="text-2xl font-bold text-neutral-900">{stat.value}</p>
+                            <div className="flex items-center gap-1.5 mt-2">
                                 {stat.trend === 'up' ? (
                                     <ArrowUpRight className="text-emerald-500" size={14} />
                                 ) : (
                                     <ArrowDownRight className="text-rose-500" size={14} />
                                 )}
-                                <span className={stat.trend === 'up' ? 'text-emerald-600' : 'text-rose-600'}>
+                                <span className={`text-xs font-semibold ${stat.trend === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                     {stat.change}
                                 </span>
-                                <span className="text-text-hint opacity-50 ml-1 italic font-bold">Performance Index</span>
                             </div>
                         </div>
                     </motion.div>
                 ))}
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
-                <motion.div variants={item} className="lg:col-span-4 bg-white border border-divider rounded-[2.5rem] shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-8 border-b border-divider flex items-center justify-between">
+            {/* Tables Section */}
+            <div className="grid gap-6 lg:grid-cols-5">
+                {/* Recent Orders */}
+                <motion.div variants={item} className="lg:col-span-3 bg-white rounded-2xl border border-neutral-100 overflow-hidden">
+                    <div className="p-6 border-b border-neutral-100 flex items-center justify-between">
                         <div>
-                            <h3 className="font-black text-text-primary uppercase text-[10px] tracking-[0.2em]">Latest Transactions</h3>
-                            <p className="text-xs font-bold text-text-hint mt-1">Real-time order processing feed</p>
+                            <h3 className="font-semibold text-neutral-900">Recent Orders</h3>
+                            <p className="text-sm text-neutral-500">Latest customer transactions</p>
                         </div>
-                        <button className="px-5 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-neutral-800 transition-all shadow-lg shadow-primary/10">Export Records</button>
+                        <button className="px-4 py-2 bg-neutral-900 text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors">
+                            View All
+                        </button>
                     </div>
-                    <div className="flex-1 overflow-x-auto">
-                        <table className="w-full text-left text-sm border-collapse">
-                            <thead className="bg-surface/50 text-text-hint uppercase text-[9px] font-black tracking-[0.2em]">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-neutral-50 text-neutral-500 text-xs font-medium">
                                 <tr>
-                                    <th className="px-8 py-4 border-b border-divider">Entity ID</th>
-                                    <th className="px-8 py-4 border-b border-divider">Account</th>
-                                    <th className="px-8 py-4 border-b border-divider">Status Node</th>
-                                    <th className="px-8 py-4 border-b border-divider text-right">Value (USD)</th>
+                                    <th className="px-6 py-3 text-left">Order</th>
+                                    <th className="px-6 py-3 text-left">Customer</th>
+                                    <th className="px-6 py-3 text-left">Status</th>
+                                    <th className="px-6 py-3 text-right">Amount</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-divider/50">
+                            <tbody className="divide-y divide-neutral-100">
                                 {recentOrders?.map((order: any) => (
-                                    <tr key={order.id} className="hover:bg-surface/30 transition-all group">
-                                        <td className="px-8 py-5">
-                                            <span className="font-black text-text-primary group-hover:text-primary transition-colors text-[11px] uppercase tracking-tighter">#{order.orderNumber}</span>
+                                    <tr key={order.id} className="hover:bg-neutral-50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <span className="font-semibold text-neutral-900 text-sm">#{order.orderNumber}</span>
                                         </td>
-                                        <td className="px-8 py-5">
+                                        <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center text-primary italic font-black text-[10px] uppercase">
+                                                <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 text-xs font-semibold">
                                                     {order.user?.name?.charAt(0) || 'G'}
                                                 </div>
-                                                <span className="text-xs font-bold text-text-secondary">{order.user?.name || 'Guest User'}</span>
+                                                <span className="text-sm text-neutral-600">{order.user?.name || 'Guest'}</span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-5">
-                                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ring-1 ring-inset ${order.status === 'delivered' ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' :
-                                                order.status === 'cancelled' ? 'bg-rose-50 text-rose-700 ring-rose-100' :
-                                                    'bg-blue-50 text-blue-700 ring-blue-100'
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${order.status === 'delivered' ? 'bg-emerald-50 text-emerald-700' :
+                                                    order.status === 'cancelled' ? 'bg-rose-50 text-rose-700' :
+                                                        order.status === 'shipped' ? 'bg-blue-50 text-blue-700' :
+                                                            'bg-amber-50 text-amber-700'
                                                 }`}>
-                                                {order.status}
+                                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                             </span>
                                         </td>
-                                        <td className="px-8 py-5 text-right font-black text-text-primary text-[11px]">${order.totalAmount.toFixed(2)}</td>
+                                        <td className="px-6 py-4 text-right font-semibold text-neutral-900 text-sm">
+                                            ${order.totalAmount.toFixed(2)}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -184,27 +204,24 @@ export const Dashboard = () => {
                     </div>
                 </motion.div>
 
-                <motion.div variants={item} className="lg:col-span-3 bg-white border border-divider rounded-[2.5rem] shadow-sm p-8 flex flex-col">
-                    <div className="mb-8">
-                        <h3 className="font-black text-text-primary uppercase text-[10px] tracking-[0.2em]">High Affinity Catalog</h3>
-                        <p className="text-xs font-bold text-text-hint mt-1">Products with highest conversion velocity</p>
+                {/* Top Products */}
+                <motion.div variants={item} className="lg:col-span-2 bg-white rounded-2xl border border-neutral-100 p-6">
+                    <div className="mb-6">
+                        <h3 className="font-semibold text-neutral-900">Top Products</h3>
+                        <p className="text-sm text-neutral-500">Best selling items</p>
                     </div>
-                    <div className="space-y-6">
-                        {topProducts?.map((product: any) => (
-                            <div key={product.productId} className="flex items-center gap-5 group cursor-pointer p-4 rounded-3xl hover:bg-surface transition-all">
-                                <div className="w-14 h-14 bg-white rounded-2xl border border-divider flex items-center justify-center shadow-sm group-hover:bg-primary group-hover:text-white transition-all overflow-hidden relative ring-4 ring-transparent group-hover:ring-primary/5">
-                                    <Package size={22} className="group-hover:scale-110 transition-transform" />
+                    <div className="space-y-4">
+                        {topProducts?.map((product: any, index: number) => (
+                            <div key={product.productId} className="flex items-center gap-4 p-3 rounded-xl hover:bg-neutral-50 transition-colors group cursor-pointer">
+                                <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-600 font-semibold text-sm group-hover:bg-neutral-900 group-hover:text-white transition-colors">
+                                    {index + 1}
                                 </div>
-                                <div className="flex-1">
-                                    <p className="text-xs font-black text-text-primary line-clamp-1 group-hover:text-primary transition-colors tracking-tight uppercase">{product.productName}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-[10px] text-text-hint font-bold uppercase tracking-widest">{product.totalQuantity} Units Transacted</span>
-                                        <span className="w-1 h-1 rounded-full bg-divider"></span>
-                                        <span className="text-[9px] text-emerald-500 font-black uppercase">Revenue Peak</span>
-                                    </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-neutral-900 truncate">{product.productName}</p>
+                                    <p className="text-xs text-neutral-500">{product.totalQuantity} sold</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs font-black text-text-primary">${product.totalRevenue.toFixed(2)}</p>
+                                    <p className="text-sm font-semibold text-neutral-900">${product.totalRevenue.toFixed(0)}</p>
                                 </div>
                             </div>
                         ))}

@@ -104,10 +104,10 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">
-                                {coupon ? 'Update Coupon Node' : 'Deploy Discount Protocol'}
+                                {coupon ? 'Edit Coupon' : 'Add New Coupon'}
                             </h3>
                             <p className="text-[10px] font-black uppercase tracking-widest text-text-hint mt-1">
-                                Configure promotional parameters and validity logic.
+                                Set discount amount and usage limits
                             </p>
                         </div>
                     </div>
@@ -119,22 +119,22 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                 <form id="coupon-form" onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Promotional Code</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Coupon Code *</label>
                             <div className="relative">
                                 <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-text-hint" size={18} />
                                 <input
                                     required
                                     type="text"
-                                    placeholder="WELCOME20"
+                                    placeholder="e.g. SAVE20"
                                     value={formData.code}
-                                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                                     className="w-full pl-12 pr-4 py-3.5 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all uppercase"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Benefit Model</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Discount Type</label>
                             <div className="flex bg-surface p-1 rounded-2xl border border-divider">
                                 <button
                                     type="button"
@@ -156,11 +156,11 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Benefit Value</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Discount Amount *</label>
                             <input
                                 required
                                 type="number"
-                                placeholder={formData.type === 'percentage' ? '20' : '500'}
+                                placeholder={formData.type === 'percentage' ? 'e.g. 20 (for 20%)' : 'e.g. 10 (for $10 off)'}
                                 value={formData.value}
                                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                                 className="w-full px-5 py-3.5 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
@@ -168,10 +168,10 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Min Threshold ($)</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Minimum Order <span className="text-text-secondary">(optional)</span></label>
                             <input
                                 type="number"
-                                placeholder="0"
+                                placeholder="e.g. 50 (require $50 minimum)"
                                 value={formData.minOrderAmount}
                                 onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
                                 className="w-full px-5 py-3.5 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
@@ -179,10 +179,10 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Max Ceiling ($)</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Max Discount <span className="text-text-secondary">(optional)</span></label>
                             <input
                                 type="number"
-                                placeholder="Unlimited"
+                                placeholder="e.g. 100 (cap at $100 off)"
                                 value={formData.maxDiscountAmount}
                                 onChange={(e) => setFormData({ ...formData, maxDiscountAmount: e.target.value })}
                                 className="w-full px-5 py-3.5 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
@@ -190,12 +190,12 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Global Limit</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Total Usage Limit <span className="text-text-secondary">(optional)</span></label>
                             <div className="relative">
                                 <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-text-hint" size={18} />
                                 <input
                                     type="number"
-                                    placeholder="Total usage limit"
+                                    placeholder="e.g. 100 (limit to 100 uses)"
                                     value={formData.usageLimit}
                                     onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
                                     className="w-full pl-12 pr-4 py-3.5 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
@@ -204,7 +204,7 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Activation Date</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Start Date *</label>
                             <div className="relative">
                                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-text-hint" size={18} />
                                 <input
@@ -218,7 +218,7 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Expiry Date</label>
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">End Date *</label>
                             <div className="relative">
                                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-text-hint" size={18} />
                                 <input
@@ -236,8 +236,8 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                                 <div className="flex items-center gap-3">
                                     <Activity className="text-primary" size={20} />
                                     <div>
-                                        <p className="text-[10px] font-black text-text-primary uppercase tracking-widest">Immediate Deployment</p>
-                                        <p className="text-[9px] font-bold text-text-hint uppercase mt-0.5">Activate node upon synchronization</p>
+                                        <p className="text-[10px] font-black text-text-primary uppercase tracking-widest">Status</p>
+                                        <p className="text-[9px] font-bold text-text-hint uppercase mt-0.5">{formData.isActive ? 'Coupon is active and usable' : 'Coupon is disabled'}</p>
                                     </div>
                                 </div>
                                 <button
@@ -257,7 +257,7 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         onClick={onClose}
                         className="px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-text-hint hover:text-text-primary transition-all"
                     >
-                        Abort Sync
+                        Cancel
                     </button>
                     <button
                         type="submit"
@@ -268,13 +268,10 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         {mutation.isPending ? (
                             <>
                                 <Loader2 className="animate-spin" size={18} />
-                                Syncing Ledger...
+                                Saving...
                             </>
                         ) : (
-                            <>
-                                Synchronize Protocol
-                                <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                            </>
+                            coupon ? 'Save Changes' : 'Create Coupon'
                         )}
                     </button>
                 </div>
