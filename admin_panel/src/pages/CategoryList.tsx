@@ -201,18 +201,32 @@ export const CategoryList = () => {
                                     <div className="bg-surface/30 divide-y divide-divider/50 border-t border-divider">
                                         {category.subcategories.map((sub: any) => (
                                             <div key={sub.id} className="flex items-center justify-between py-4 pl-24 pr-8 hover:bg-white transition-colors group/sub">
-                                                <span className="text-[11px] font-black uppercase text-text-secondary group-hover/sub:text-primary transition-colors tracking-tight">{sub.name}</span>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[11px] font-black uppercase text-text-secondary group-hover/sub:text-primary transition-colors tracking-tight">{sub.name}</span>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ring-1 ring-inset ${sub.isActive ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : 'bg-rose-50 text-rose-700 ring-rose-100'}`}>
+                                                        {sub.isActive ? 'Active' : 'Suspended'}
+                                                    </span>
+                                                </div>
                                                 <div className="flex items-center gap-6">
                                                     <div className="flex items-center gap-2 opacity-0 group-hover/sub:opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => handleEdit(sub)}
                                                             className="p-1.5 text-text-hint hover:text-primary transition-colors"
+                                                            title="Edit"
                                                         >
                                                             <Edit size={14} />
                                                         </button>
                                                         <button
+                                                            onClick={() => handleToggleStatus(sub.id, sub.isActive)}
+                                                            className={`p-1.5 transition-colors ${sub.isActive ? 'text-text-hint hover:text-amber-600' : 'text-text-hint hover:text-emerald-600'}`}
+                                                            title={sub.isActive ? 'Suspend' : 'Activate'}
+                                                        >
+                                                            <Power size={14} />
+                                                        </button>
+                                                        <button
                                                             onClick={() => handleDelete(sub.id)}
                                                             className="p-1.5 text-text-hint hover:text-rose-600 transition-colors"
+                                                            title="Delete permanently"
                                                         >
                                                             <Trash2 size={14} />
                                                         </button>
