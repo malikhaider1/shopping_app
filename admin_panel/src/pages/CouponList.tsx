@@ -7,8 +7,7 @@ import {
     Edit,
     Search,
     Loader2,
-    Calendar,
-    Zap
+    Calendar
 } from 'lucide-react';
 import { AddCouponModal } from '../components/admin/AddCouponModal.tsx';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

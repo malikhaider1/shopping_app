@@ -5,13 +5,11 @@ import {
     Package,
     ArrowUpRight,
     ArrowDownRight,
-    UserCircle,
     Activity
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/api';
-import { format } from 'date-fns';
 
 const container = {
     hidden: { opacity: 0 },
@@ -29,7 +27,7 @@ const item = {
 };
 
 export const Dashboard = () => {
-    const { data: statsData, isLoading: statsLoading } = useQuery({
+    const { data: statsData } = useQuery({
         queryKey: ['admin-stats'],
         queryFn: async () => {
             const res = await api.get('/admin/dashboard/stats');
@@ -37,7 +35,7 @@ export const Dashboard = () => {
         }
     });
 
-    const { data: recentOrders, isLoading: ordersLoading } = useQuery({
+    const { data: recentOrders } = useQuery({
         queryKey: ['admin-recent-orders'],
         queryFn: async () => {
             const res = await api.get('/admin/dashboard/orders');
@@ -45,7 +43,7 @@ export const Dashboard = () => {
         }
     });
 
-    const { data: topProducts, isLoading: productsLoading } = useQuery({
+    const { data: topProducts } = useQuery({
         queryKey: ['admin-top-selling'],
         queryFn: async () => {
             const res = await api.get('/admin/dashboard/products/top-selling');

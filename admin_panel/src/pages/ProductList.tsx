@@ -5,15 +5,13 @@ import {
     Filter,
     Edit,
     Trash2,
-    Eye,
     ArrowUpDown,
-    Loader2,
-    Package
+    Loader2
 } from 'lucide-react';
 import { AddProductModal } from '../components/admin/AddProductModal.tsx';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export const ProductList = () => {
     const queryClient = useQueryClient();
@@ -154,10 +152,10 @@ export const ProductList = () => {
                                     </td>
                                     <td className="px-8 py-5">
                                         <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ring-1 ring-inset ${product.stockQuantity > 20
-                                                ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-                                                : product.stockQuantity > 0
-                                                    ? 'bg-amber-50 text-amber-700 ring-amber-100'
-                                                    : 'bg-rose-50 text-rose-700 ring-rose-100'
+                                            ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+                                            : product.stockQuantity > 0
+                                                ? 'bg-amber-50 text-amber-700 ring-amber-100'
+                                                : 'bg-rose-50 text-rose-700 ring-rose-100'
                                             }`}>
                                             {product.stockQuantity > 20 ? 'Optimal' : product.stockQuantity > 0 ? 'Critical' : 'Depleted'}
                                         </span>

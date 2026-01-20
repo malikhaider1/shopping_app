@@ -10,7 +10,7 @@ import {
 import { AddBannerModal } from '../components/admin/AddBannerModal.tsx';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 
 export const BannerList = () => {
@@ -107,8 +107,8 @@ export const BannerList = () => {
                             </div>
                             <div className="absolute top-6 left-6">
                                 <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-2xl backdrop-blur-md ring-1 ring-inset ${banner.isActive
-                                        ? 'bg-emerald-500/90 text-white ring-emerald-400'
-                                        : 'bg-neutral-500/90 text-white ring-neutral-400'
+                                    ? 'bg-emerald-500/90 text-white ring-emerald-400'
+                                    : 'bg-neutral-500/90 text-white ring-neutral-400'
                                     }`}>
                                     {banner.isActive ? 'Live Stream' : 'Hibernating'}
                                 </span>

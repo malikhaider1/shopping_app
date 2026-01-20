@@ -1,5 +1,5 @@
-import { X, Plus, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { X, Loader2, Upload, ImageIcon, Link, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 
@@ -11,6 +11,9 @@ interface AddCategoryModalProps {
 
 export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModalProps) => {
     const queryClient = useQueryClient();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [imageMode, setImageMode] = useState<'url' | 'file'>('file');
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: '',
         slug: '',
@@ -30,6 +33,11 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                 displayOrder: category.displayOrder || 0,
                 parentId: category.parentId || null,
             });
+            // Set preview if editing existing category with image
+            if (category.imageUrl) {
+                setImagePreview(category.imageUrl);
+                setImageMode('url');
+            }
         } else {
             setFormData({
                 name: '',
@@ -39,8 +47,45 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                 displayOrder: 0,
                 parentId: null,
             });
+            setImagePreview(null);
         }
     }, [category, isOpen]);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size must be less than 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+                setImagePreview(base64);
+                setFormData({ ...formData, imageUrl: base64 });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleImageClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleRemoveImage = () => {
+        setImagePreview(null);
+        setFormData({ ...formData, imageUrl: '' });
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     const mutation = useMutation({
         mutationFn: async (data: any) => {
@@ -53,11 +98,35 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
             queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
             onClose();
         },
+        onError: (error: any) => {
+            const message = error.response?.data?.error?.message || error.message || 'Failed to save category';
+            alert(`Error: ${message}`);
+        },
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        mutation.mutate(formData);
+
+        // Sanitize data before sending
+        const payload = {
+            ...formData,
+            // Convert null parentId to undefined so it's stripped or accepted by Zod optional()
+            parentId: formData.parentId || undefined,
+            // Ensure displayOrder is a number
+            displayOrder: Number(formData.displayOrder) || 0,
+            // Ensure empty strings are undefined for optional fields if needed, 
+            // though Zod might accept empty strings depending on definition.
+            // Based on checking API schems:
+            // description: z.string().max(500).optional() -> Empty string is valid string, but undefined is better for "no description"
+            description: formData.description || undefined,
+            // imageUrl: z.string()...optional() -> Empty string might fail .url() or .refine() if not handled.
+            // The schema has .refine((val) => !val || ...) so empty string is FALSY and passes !val. 
+            // EXCEPT if it was literally "", !"" is true. So it should pass. 
+            // But let's be safe and send undefined if empty.
+            imageUrl: formData.imageUrl || undefined,
+        };
+
+        mutation.mutate(payload);
     };
 
     if (!isOpen) return null;
@@ -135,14 +204,103 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Cover Asset URL</label>
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Cover Asset</label>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setImageMode('file')}
+                                    className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all ${imageMode === 'file' ? 'bg-primary text-white' : 'bg-surface text-text-hint hover:text-primary'
+                                        }`}
+                                >
+                                    <Upload size={12} className="inline mr-1" />
+                                    Upload
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setImageMode('url')}
+                                    className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all ${imageMode === 'url' ? 'bg-primary text-white' : 'bg-surface text-text-hint hover:text-primary'
+                                        }`}
+                                >
+                                    <Link size={12} className="inline mr-1" />
+                                    URL
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Hidden file input */}
                         <input
-                            type="text"
-                            value={formData.imageUrl}
-                            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                            placeholder="https://example.com/image.jpg"
-                            className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                            className="hidden"
                         />
+
+                        {imageMode === 'file' ? (
+                            <div
+                                onClick={handleImageClick}
+                                className="relative border-2 border-dashed border-divider rounded-[2rem] overflow-hidden hover:border-primary transition-all cursor-pointer group bg-surface/30"
+                            >
+                                {imagePreview ? (
+                                    <div className="relative">
+                                        <img
+                                            src={imagePreview}
+                                            alt="Category preview"
+                                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <div className="text-center text-white">
+                                                <ImageIcon size={32} className="mx-auto mb-2" />
+                                                <p className="text-xs font-black uppercase tracking-tight">Click to change</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); handleRemoveImage(); }}
+                                            className="absolute top-3 right-3 p-2 bg-rose-500 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600 shadow-lg"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="p-10 flex flex-col items-center justify-center gap-4">
+                                        <div className="w-16 h-16 rounded-3xl bg-white group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all shadow-sm text-text-hint">
+                                            <Upload size={24} />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-xs font-black text-text-primary uppercase tracking-tight">Click to upload image</p>
+                                            <p className="text-[10px] text-text-hint font-bold mt-1">PNG, JPG or WEBP (MAX. 5MB)</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <input
+                                    type="text"
+                                    value={formData.imageUrl}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, imageUrl: e.target.value });
+                                        setImagePreview(e.target.value);
+                                    }}
+                                    placeholder="https://example.com/image.jpg"
+                                    className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all"
+                                />
+                                {imagePreview && formData.imageUrl && (
+                                    <div className="relative rounded-2xl overflow-hidden border border-divider">
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview"
+                                            className="w-full h-32 object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </form>
 

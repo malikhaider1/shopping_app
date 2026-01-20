@@ -26,7 +26,7 @@ const statusConfig: Record<string, { label: string, color: string }> = {
 export const OrderList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
-    const [page, setPage] = useState(1);
+    const [page] = useState(1);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const limit = 10;
