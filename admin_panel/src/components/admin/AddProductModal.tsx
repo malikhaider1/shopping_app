@@ -24,7 +24,7 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
         shortDescription: '',
         basePrice: 0,
         stockQuantity: 0,
-        categoryId: 'cat-123', // Default or fetch categories
+        categoryId: '', // Default or fetch categories
         isFeatured: false,
         isActive: true,
     });
@@ -63,7 +63,7 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                 shortDescription: '',
                 basePrice: 0,
                 stockQuantity: 0,
-                categoryId: 'cat-123',
+                categoryId: '',
                 isFeatured: false,
                 isActive: true,
             });
@@ -165,20 +165,41 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
             onClose();
         },
         onError: (error: any) => {
-            const message = error.response?.data?.error?.message || error.message || 'Failed to save product';
-            alert(`Error: ${message}`);
+            console.error('Submit Error:', error);
+            const message = error.response?.data?.error?.message
+                || error.response?.data?.message
+                || error.message
+                || 'Failed to save product';
+
+            // Try to extract Zod issues if present
+            const issues = error.response?.data?.error?.issues;
+            const detailedMessage = issues
+                ? `${message}: ${issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ')}`
+                : message;
+
+            alert(`Error: ${detailedMessage}`);
         }
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const payload = {
+        if (!e.currentTarget.checkValidity()) {
+            e.currentTarget.reportValidity();
+            return;
+        }
+
+        const payload: any = {
             ...formData,
             // Ensure numbers
             basePrice: Number(formData.basePrice),
             stockQuantity: Number(formData.stockQuantity),
         };
+
+        // Clean up optional empty strings to undefined
+        if (!payload.brand) delete payload.brand;
+        if (!payload.categoryId) delete payload.categoryId;
+        if (payload.categoryId === 'cat-123') delete payload.categoryId; // Remove dummy default
 
         mutation.mutate(payload);
     };
@@ -198,7 +219,7 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+                <form id="product-form" onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Product Designation</label>
@@ -249,12 +270,13 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Inventory Abstract (Short Description)</label>
+                        <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Inventory Abstract (Short Description) <span className="text-text-secondary">({formData.shortDescription.length}/500)</span></label>
                         <textarea
                             rows={3}
                             value={formData.shortDescription}
                             onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
                             required
+                            maxLength={500}
                             placeholder="Briefly describe your product specifications..."
                             className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all resize-none"
                         />
@@ -428,7 +450,8 @@ export const AddProductModal = ({ isOpen, onClose, product }: AddProductModalPro
                         Abort
                     </button>
                     <button
-                        onClick={handleSubmit}
+                        type="submit"
+                        form="product-form"
                         disabled={mutation.isPending}
                         className="px-10 py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-xl shadow-primary/20 active:scale-95 flex items-center gap-3 disabled:opacity-50"
                     >

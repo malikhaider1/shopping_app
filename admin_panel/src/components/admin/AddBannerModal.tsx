@@ -56,6 +56,10 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
             queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
             onClose();
         },
+        onError: (error: any) => {
+            const message = error.response?.data?.error?.message || error.message || 'Failed to save banner';
+            alert(`Error: ${message}`);
+        },
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -91,7 +95,7 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+                <form id="banner-form" onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Promotional Headline</label>
                         <input
@@ -185,7 +189,8 @@ export const AddBannerModal = ({ isOpen, onClose, banner }: AddBannerModalProps)
                         Abort
                     </button>
                     <button
-                        onClick={handleSubmit}
+                        type="submit"
+                        form="banner-form"
                         disabled={mutation.isPending}
                         className="px-10 py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-xl shadow-primary/20 active:scale-95 flex items-center gap-3 disabled:opacity-50"
                     >

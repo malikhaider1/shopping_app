@@ -7,7 +7,8 @@ import {
     ChevronDown,
     ChevronRight,
     FolderTree,
-    Loader2
+    Loader2,
+    Power
 } from 'lucide-react';
 import { AddCategoryModal } from '../components/admin/AddCategoryModal.tsx';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -35,6 +36,23 @@ export const CategoryList = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.error?.message || error.message || 'Failed to delete category';
+            alert(`Error: ${message}`);
+        }
+    });
+
+    const toggleStatusMutation = useMutation({
+        mutationFn: async (id: string) => {
+            return api.patch(`/admin/categories/${id}/toggle-status`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.error?.message || error.message || 'Failed to toggle status';
+            alert(`Error: ${message}`);
         }
     });
 
@@ -49,8 +67,15 @@ export const CategoryList = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (window.confirm('Are you sure you want to decommission this classification node? All children may be affected.')) {
+        if (window.confirm('Are you sure you want to PERMANENTLY DELETE this category? This cannot be undone.')) {
             deleteMutation.mutate(id);
+        }
+    };
+
+    const handleToggleStatus = async (id: string, isActive: boolean) => {
+        const action = isActive ? 'suspend' : 'activate';
+        if (window.confirm(`Are you sure you want to ${action} this category?`)) {
+            toggleStatusMutation.mutate(id);
         }
     };
 
@@ -150,12 +175,21 @@ export const CategoryList = () => {
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleEdit(category); }}
                                                 className="p-2.5 text-text-hint hover:text-primary hover:bg-white rounded-xl transition-all shadow-sm hover:shadow-md active:scale-90"
+                                                title="Edit"
                                             >
                                                 <Edit size={16} />
                                             </button>
                                             <button
+                                                onClick={(e) => { e.stopPropagation(); handleToggleStatus(category.id, category.isActive); }}
+                                                className={`p-2.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-90 ${category.isActive ? 'text-text-hint hover:text-amber-600 hover:bg-amber-50' : 'text-text-hint hover:text-emerald-600 hover:bg-emerald-50'}`}
+                                                title={category.isActive ? 'Suspend' : 'Activate'}
+                                            >
+                                                <Power size={16} />
+                                            </button>
+                                            <button
                                                 onClick={(e) => { e.stopPropagation(); handleDelete(category.id); }}
                                                 className="p-2.5 text-text-hint hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-90"
+                                                title="Delete permanently"
                                             >
                                                 <Trash2 size={16} />
                                             </button>

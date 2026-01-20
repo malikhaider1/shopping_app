@@ -37,6 +37,7 @@ function App() {
                 <Route path="reviews" element={<ReviewList />} />
                 <Route path="notifications" element={<NotificationList />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="*" element={<Dashboard />} />
               </Route>
             </Route>
           </Routes>

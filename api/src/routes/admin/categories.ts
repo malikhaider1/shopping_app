@@ -99,7 +99,7 @@ categories.put("/:id", zValidator("json", updateCategorySchema), async (c) => {
     return success(c, category);
 });
 
-// DELETE /admin/categories/:id
+// DELETE /admin/categories/:id - Hard delete
 categories.delete("/:id", async (c) => {
     const categoryId = c.req.param("id");
     const db = createDb(c.env.DB);
@@ -110,12 +110,44 @@ categories.delete("/:id", async (c) => {
 
     if (!existing) return errors.notFound(c, "Category");
 
+    // Check if category has products
+    const productsCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.products)
+        .where(eq(schema.products.categoryId, categoryId));
+
+    if (productsCount[0]?.count > 0) {
+        return errors.badRequest(c, "Cannot delete category with products. Remove products first or use suspend.");
+    }
+
+    // Hard delete - actually remove from database
+    await db.delete(schema.categories).where(eq(schema.categories.id, categoryId));
+
+    return success(c, { message: "Category permanently deleted" });
+});
+
+// PATCH /admin/categories/:id/toggle-status - Suspend/Activate
+categories.patch("/:id/toggle-status", async (c) => {
+    const categoryId = c.req.param("id");
+    const db = createDb(c.env.DB);
+
+    const existing = await db.query.categories.findFirst({
+        where: eq(schema.categories.id, categoryId),
+    });
+
+    if (!existing) return errors.notFound(c, "Category");
+
+    const newStatus = !existing.isActive;
+
     await db
         .update(schema.categories)
-        .set({ isActive: false, updatedAt: new Date().toISOString() })
+        .set({ isActive: newStatus, updatedAt: new Date().toISOString() })
         .where(eq(schema.categories.id, categoryId));
 
-    return success(c, { message: "Category deleted" });
+    return success(c, {
+        message: newStatus ? "Category activated" : "Category suspended",
+        isActive: newStatus
+    });
 });
 
 export default categories;

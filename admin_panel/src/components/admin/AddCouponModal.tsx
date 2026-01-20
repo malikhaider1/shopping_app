@@ -65,6 +65,10 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
             queryClient.invalidateQueries({ queryKey: ['admin-coupons'] });
             onClose();
         },
+        onError: (error: any) => {
+            const message = error.response?.data?.error?.message || error.message || 'Failed to save coupon';
+            alert(`Error: ${message}`);
+        },
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -112,7 +116,7 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+                <form id="coupon-form" onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-text-hint uppercase tracking-widest ml-1">Promotional Code</label>
@@ -256,8 +260,9 @@ export const AddCouponModal = ({ isOpen, onClose, coupon }: AddCouponModalProps)
                         Abort Sync
                     </button>
                     <button
+                        type="submit"
+                        form="coupon-form"
                         disabled={mutation.isPending}
-                        onClick={handleSubmit}
                         className="px-10 py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-xl shadow-primary/20 active:scale-95 flex items-center gap-3 disabled:opacity-50"
                     >
                         {mutation.isPending ? (

@@ -66,22 +66,6 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
     const parentOptions = categoriesData?.data?.filter((c: any) => c.id !== category?.id) || [];
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // ...
-        <div className="space-y-2">
-            <label className="text-[10px] font-black text-text-hint uppercase tracking-[0.2em] ml-1">Parent Node</label>
-            <select
-                value={formData.parentId || ''}
-                onChange={(e) => setFormData({ ...formData, parentId: e.target.value || null })}
-                className="w-full px-5 py-4 bg-surface rounded-2xl border border-divider focus:ring-4 focus:ring-primary/5 focus:border-primary/20 outline-none font-bold text-sm transition-all appearance-none cursor-pointer"
-            >
-                <option value="">None (Root Node)</option>
-                {parentOptions.map((cat: any) => (
-                    <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                    </option>
-                ))}
-            </select>
-        </div>
         const file = e.target.files?.[0];
         if (file) {
             // Validate file type
@@ -164,7 +148,7 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+                <form id="category-form" onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
                     {/* ... (Name, Slug, Description inputs remain same) */}
 
                     <div className="space-y-2">
@@ -349,7 +333,8 @@ export const AddCategoryModal = ({ isOpen, onClose, category }: AddCategoryModal
                         Abort
                     </button>
                     <button
-                        onClick={handleSubmit}
+                        type="submit"
+                        form="category-form"
                         disabled={mutation.isPending}
                         className="px-10 py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-xl shadow-primary/20 active:scale-95 flex items-center gap-3 disabled:opacity-50"
                     >

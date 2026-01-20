@@ -64,12 +64,32 @@ products.get("/", zValidator("query", adminProductQuerySchema), async (c) => {
         offset,
     });
 
+    // Fetch primary images for all products
+    const productIds = productsData.map((p) => p.id);
+    const images = productIds.length > 0
+        ? await db.query.productImages.findMany({
+            where: and(
+                sql`${schema.productImages.productId} IN (${sql.join(productIds.map(id => sql`${id}`), sql`, `)})`,
+                eq(schema.productImages.isPrimary, true)
+            ),
+        })
+        : [];
+
+    // Create a map for quick lookup
+    const imageMap = new Map(images.map((img) => [img.productId, img.imageUrl]));
+
+    // Attach mainImage to each product
+    const productsWithImages = productsData.map((product) => ({
+        ...product,
+        mainImage: imageMap.get(product.id) || null,
+    }));
+
     const countResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(schema.products)
         .where(conditions.length > 0 ? and(...conditions) : undefined);
 
-    return successWithMeta(c, productsData, {
+    return successWithMeta(c, productsWithImages, {
         page,
         limit,
         total: countResult[0]?.count || 0,
