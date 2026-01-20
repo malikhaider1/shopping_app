@@ -3,11 +3,10 @@ import api from './api';
 interface UploadResponse {
     success: boolean;
     data?: {
+        id: number;
         url: string;
-        key: string;
-        filename: string;
-        size: number;
         contentType: string;
+        size: number;
     };
     error?: {
         message: string;
@@ -15,35 +14,18 @@ interface UploadResponse {
 }
 
 /**
- * Upload an image file to R2 storage via the API
+ * Upload an image file to D1 storage via the API
  * @param file - The file to upload
  * @returns The HTTP URL of the uploaded image
  */
 export async function uploadImage(file: File): Promise<string> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('image', file);
 
-    const response = await api.post<UploadResponse>('/admin/upload', formData, {
+    const response = await api.post<UploadResponse>('/images', formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
-    });
-
-    if (!response.data.success || !response.data.data?.url) {
-        throw new Error(response.data.error?.message || 'Failed to upload image');
-    }
-
-    return response.data.data.url;
-}
-
-/**
- * Upload a base64 image to R2 storage via the API
- * @param base64 - The base64 data URL (e.g., data:image/png;base64,...)
- * @returns The HTTP URL of the uploaded image
- */
-export async function uploadBase64Image(base64: string): Promise<string> {
-    const response = await api.post<UploadResponse>('/admin/upload', {
-        base64,
     });
 
     if (!response.data.success || !response.data.data?.url) {

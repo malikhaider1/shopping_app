@@ -9,10 +9,7 @@ binding = "DB"
 database_name = "shopping-db"
 database_id = "3162216c-e684-423f-bd60-38a9775f37d7"
 
-# R2 Bucket for file storage
-[[r2_buckets]]
-binding = "STORAGE"
-bucket_name = "shopping-assets"
+# Note: Images are stored in D1 database as BLOBs (no R2 required)
 
 # Environment variables (secrets should be set via wrangler secret)
 [vars]

@@ -18,6 +18,7 @@ import orders from "./routes/orders";
 import banners from "./routes/banners";
 import notifications from "./routes/notifications";
 import admin from "./routes/admin";
+import images from "./routes/images";
 
 // Create app
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
@@ -62,6 +63,7 @@ api.route("/orders", orders);
 api.route("/banners", banners);
 api.route("/notifications", notifications);
 api.route("/admin", admin);
+api.route("/images", images);
 
 // Mount API under /api/v1
 app.route("/api/v1", api);

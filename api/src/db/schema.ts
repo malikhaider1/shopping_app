@@ -346,3 +346,15 @@ export const settings = sqliteTable("settings", {
     group: text("group").notNull(), // e.g., 'store', 'payment', 'shipping'
     updatedAt: text("updated_at").default(sql`(datetime('now'))`).notNull(),
 });
+
+// ============================================================================
+// IMAGES (Stored in D1 as BLOB)
+// ============================================================================
+
+export const images = sqliteTable("images", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    data: blob("data", { mode: "buffer" }).notNull(),
+    mimeType: text("mime_type").notNull(),
+    createdAt: text("created_at").default(sql`(datetime('now'))`).notNull(),
+});
+

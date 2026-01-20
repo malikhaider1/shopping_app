@@ -38,6 +38,10 @@ export const ProductList = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.error?.message || error.message || 'Failed to delete product';
+            alert(`Error: ${message}`);
         }
     });
 
