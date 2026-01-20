@@ -18,7 +18,7 @@ export const UserList = () => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [tab, setTab] = useState<'All' | 'Active' | 'Blocked' | 'Guests'>('All');
-    const [page, setPage] = useState(1);
+    const [page] = useState(1);
     const limit = 10;
 
     const { data: usersData, isLoading } = useQuery({
